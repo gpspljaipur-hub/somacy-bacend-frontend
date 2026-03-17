@@ -15,6 +15,9 @@ const generalItemRoutes = require("./routes/general_item.routes");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const labTestCategoryRoutes = require("./routes/lab_test_category.routes");
+const cartRoutes = require("./routes/userCart.routes");
+const userOrderDetails = require("./routes/userOrder.routes");
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,4 +53,6 @@ app.use("/api/general_items", require("./routes/general_item.routes"));
 app.use("/api/export", require("./routes/export.routes"));
 app.use("/api/users", userRoutes);
 app.use("/api/lab-test-categories", labTestCategoryRoutes);
+app.use("/api/user-cart", cartRoutes);
+app.use("/api/user-order", userOrderDetails);
 module.exports = app;

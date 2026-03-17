@@ -68,6 +68,49 @@ const addLabTest = async (data) => {
 };
 
 // GET ALL LAB TESTS
+// const getAllLabTests = async (
+//   limit = 20,
+//   offset = 0,
+//   search = "",
+//   type = null,
+// ) => {
+//   let query = `
+//         SELECT lt.*,
+//         COALESCE(
+//             (SELECT json_agg(json_build_object('id', sub.id, 'test_name', sub.test_name))
+//              FROM lab_test_items lti
+//              JOIN lab_tests sub ON lti.test_id = sub.id
+//              WHERE lti.combo_id = lt.id),
+//             '[]'::json
+//         ) as included_tests
+//         FROM lab_tests lt
+//     `;
+//   const params = [];
+//   const conditions = [];
+
+//   if (search) {
+//     conditions.push(
+//       `(lt.test_name ILIKE $${conditions.length + 1} OR lt.package_name ILIKE $${conditions.length + 1})`,
+//     );
+//     params.push(`%${search}%`);
+//   }
+
+//   if (type) {
+//     conditions.push(`lt.lab_test_type = $${conditions.length + 1}`);
+//     params.push(type);
+//   }
+
+//   if (conditions.length > 0) {
+//     query += " WHERE " + conditions.join(" AND ");
+//   }
+
+//   query += ` ORDER BY lt.id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+//   params.push(limit, offset);
+
+//   const { rows } = await pool.query(query, params);
+//   return rows;
+// };
+
 const getAllLabTests = async (
   limit = 20,
   offset = 0,
@@ -75,16 +118,30 @@ const getAllLabTests = async (
   type = null,
 ) => {
   let query = `
-        SELECT lt.*, 
-        COALESCE(
-            (SELECT json_agg(json_build_object('id', sub.id, 'test_name', sub.test_name))
-             FROM lab_test_items lti
-             JOIN lab_tests sub ON lti.test_id = sub.id
-             WHERE lti.combo_id = lt.id), 
-            '[]'::json
-        ) as included_tests
-        FROM lab_tests lt
-    `;
+  SELECT 
+  lt.*,
+  c.category_name,
+
+  COALESCE(
+    (
+      SELECT json_agg(
+        json_build_object(
+          'id', sub.id,
+          'test_name', sub.test_name
+        )
+      )
+      FROM lab_test_items lti
+      JOIN lab_tests sub ON lti.test_id = sub.id
+      WHERE lti.combo_id = lt.id
+    ),
+    '[]'::json
+  ) as included_tests
+
+  FROM lab_tests lt
+  LEFT JOIN lab_test_categories c
+  ON lt.category_id = c.id
+  `;
+
   const params = [];
   const conditions = [];
 
@@ -105,9 +162,11 @@ const getAllLabTests = async (
   }
 
   query += ` ORDER BY lt.id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+
   params.push(limit, offset);
 
   const { rows } = await pool.query(query, params);
+
   return rows;
 };
 
