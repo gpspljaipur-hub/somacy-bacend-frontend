@@ -3,6 +3,14 @@ const categoryModel = require("../models/lab_test_category.model");
 const addCategory = async (req, res) => {
   try {
     const { category_name } = req.body;
+
+    if (!category_name) {
+      return res.json({
+        status: 0,
+        message: "Category name is required",
+      });
+    }
+
     const image = req.file ? req.file.filename : null;
 
     const category = await categoryModel.addCategory({
