@@ -41,11 +41,14 @@ const getOrders = async (req, res) => {
     const page = Number(req.body.page) || 1;
     const limit = Number(req.body.limit) || 10;
     const order_type = req.body.order_type || null;
-
     const data = await orderModel.getOrders(user_id, page, limit, order_type);
-
     const total = await orderModel.countOrders(user_id, order_type);
-
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        status: 0,
+        message: "Order not available",
+      });
+    }
     res.json({
       status: 1,
       page,
