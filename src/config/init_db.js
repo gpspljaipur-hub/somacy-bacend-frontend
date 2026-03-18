@@ -21,6 +21,8 @@ const initDatabase = async () => {
         pincode VARCHAR(20),
         drug_license_no VARCHAR(255),
         gst_no VARCHAR(20),
+        profile_image TEXT,
+        temp_new_email VARCHAR(255),
         otp VARCHAR(6),
         otp_expiry TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -28,7 +30,7 @@ const initDatabase = async () => {
       );
     `);
 
-    // Ensure new columns exist
+    // Ensure new columns exist for admins
     await pool.query(`
       ALTER TABLE admins 
       ADD COLUMN IF NOT EXISTS drug_license_no VARCHAR(255),
@@ -90,11 +92,12 @@ const initDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
     // Ensure coupon_image column exists for existing tables
     await pool.query(`
-            ALTER TABLE coupons 
-            ADD COLUMN IF NOT EXISTS coupon_image VARCHAR(255);
-        `);
+      ALTER TABLE coupons 
+      ADD COLUMN IF NOT EXISTS coupon_image VARCHAR(255);
+    `);
 
     // 6. DELIVERY BOYS TABLE
     await pool.query(`
@@ -124,9 +127,11 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
-      ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT;
     `);
+
+    await pool.query(
+      `ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT;`,
+    );
 
     // 8. MEDICINES TABLE
     await pool.query(`
@@ -145,6 +150,7 @@ const initDatabase = async () => {
         stock_quantity INTEGER DEFAULT 0,
         prescription_required BOOLEAN DEFAULT FALSE,
         medicine_rghs BOOLEAN DEFAULT FALSE,
+        pack_type VARCHAR(50),
         status INTEGER DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -174,6 +180,8 @@ const initDatabase = async () => {
         payment_method VARCHAR(50),
         "RGHS_Tid" VARCHAR(255),
         address TEXT,
+        doctor_name VARCHAR(255),
+        prescription_date DATE,
         current_status VARCHAR(50) DEFAULT 'Pending',
         order_flow VARCHAR(100) DEFAULT 'Waiting for accept/reject',
         order_type VARCHAR(20) DEFAULT 'Non-RGHS',
@@ -185,85 +193,103 @@ const initDatabase = async () => {
       );
     `);
 
-    // Ensure new columns exist for existing tables
+    // Ensure new columns exist for medicine_orders
     await pool.query(`
       ALTER TABLE medicine_orders 
       ADD COLUMN IF NOT EXISTS "RGHS_Tid" VARCHAR(255),
       ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'Non-RGHS',
       ADD COLUMN IF NOT EXISTS prescription_images TEXT[],
       ADD COLUMN IF NOT EXISTS customer_id_manual INTEGER,
-      ADD COLUMN IF NOT EXISTS user_action VARCHAR(20) DEFAULT 'pending';
+      ADD COLUMN IF NOT EXISTS user_action VARCHAR(20) DEFAULT 'pending',
+      ADD COLUMN IF NOT EXISTS doctor_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS prescription_date DATE;
     `);
 
-    await pool.query('ALTER TABLE medicine_orders ALTER COLUMN payment_method DROP DEFAULT;');
+    await pool.query(
+      "ALTER TABLE medicine_orders ALTER COLUMN payment_method DROP DEFAULT;",
+    );
 
     // 10. MEDICINE ORDER ITEMS TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS medicine_order_items(
-      id SERIAL PRIMARY KEY,
-      order_id INTEGER REFERENCES medicine_orders(id) ON DELETE CASCADE,
-      medicine_id INTEGER REFERENCES medicines(id) ON DELETE SET NULL,
-      quantity INTEGER DEFAULT 1,
-      price DECIMAL(10, 2) DEFAULT 0,
-      discount DECIMAL(10, 2) DEFAULT 0,
-      item_total DECIMAL(10, 2) DEFAULT 0
-    );
+      CREATE TABLE IF NOT EXISTS medicine_order_items (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES medicine_orders(id) ON DELETE CASCADE,
+        medicine_id INTEGER REFERENCES medicines(id) ON DELETE SET NULL,
+        quantity INTEGER DEFAULT 1,
+        price DECIMAL(10,2) DEFAULT 0,
+        discount DECIMAL(10,2) DEFAULT 0,
+        item_total DECIMAL(10,2) DEFAULT 0
+      );
     `);
 
     // 10.5 SYSTEM CART TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS system_cart(
-      id SERIAL PRIMARY KEY,
-      order_id INTEGER REFERENCES medicine_orders(id) ON DELETE CASCADE,
-      medicine_id INTEGER REFERENCES medicines(id) ON DELETE SET NULL,
-      num_strips INTEGER DEFAULT 1,
-      pack_type VARCHAR(50),
-      quantity INTEGER DEFAULT 1,
-      price DECIMAL(10, 2) DEFAULT 0,
-      discount DECIMAL(10, 2) DEFAULT 0,
-      item_total DECIMAL(10, 2) DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+      CREATE TABLE IF NOT EXISTS system_cart (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES medicine_orders(id) ON DELETE CASCADE,
+        medicine_id INTEGER REFERENCES medicines(id) ON DELETE SET NULL,
+        num_strips INTEGER DEFAULT 1,
+        pack_type VARCHAR(50),
+        quantity INTEGER DEFAULT 1,
+        price DECIMAL(10,2) DEFAULT 0,
+        discount DECIMAL(10,2) DEFAULT 0,
+        item_total DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // 11. PAYMENT GATEWAYS TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS payment_gateways(
-      id SERIAL PRIMARY KEY,
-      gateway_name VARCHAR(255),
-      gateway_image TEXT,
-      status INTEGER DEFAULT 1,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+      CREATE TABLE IF NOT EXISTS payment_gateways (
+        id SERIAL PRIMARY KEY,
+        gateway_name VARCHAR(255),
+        gateway_image TEXT,
+        status INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // 12. TESTIMONIALS TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS testimonials(
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255),
-      designation VARCHAR(255),
-      content TEXT,
-      image TEXT,
-      status INTEGER DEFAULT 1,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255),
+        designation VARCHAR(255),
+        content TEXT,
+        image TEXT,
+        status INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
-    // 13. LAB TESTS TABLE
+    // 13. LAB TEST CATEGORIES TABLE
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lab_test_categories (
+        id SERIAL PRIMARY KEY,
+        category_name VARCHAR(255) NOT NULL,
+        image TEXT,
+        status INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 14. LAB TESTS TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lab_tests (
         id SERIAL PRIMARY KEY,
+        category_id INTEGER REFERENCES lab_test_categories(id) ON DELETE SET NULL,
         test_name VARCHAR(255),
-        amount DECIMAL(10, 2) DEFAULT 0,
-        discount DECIMAL(10, 2) DEFAULT 0,
-        rghs_discount DECIMAL(10, 2) DEFAULT 0,
+        package_name VARCHAR(255),
+        amount DECIMAL(10,2) DEFAULT 0,
+        discount DECIMAL(10,2) DEFAULT 0,
+        rghs_discount DECIMAL(10,2) DEFAULT 0,
         is_rghs BOOLEAN DEFAULT FALSE,
         description TEXT,
         image VARCHAR(255),
-        lab_test_type VARCHAR(100),
+        lab_test_type VARCHAR(100) DEFAULT 'Singular',
         status INTEGER DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -275,12 +301,15 @@ const initDatabase = async () => {
       ALTER TABLE lab_tests 
       ADD COLUMN IF NOT EXISTS image VARCHAR(255),
       ADD COLUMN IF NOT EXISTS lab_test_type VARCHAR(100) DEFAULT 'Singular',
-      ADD COLUMN IF NOT EXISTS package_name VARCHAR(255);
-
-      ALTER TABLE lab_tests ALTER COLUMN test_name DROP NOT NULL;
+      ADD COLUMN IF NOT EXISTS package_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES lab_test_categories(id) ON DELETE SET NULL;
     `);
 
-    // 13.5 LAB TEST ITEMS (For Combo Packages)
+    await pool.query(
+      `ALTER TABLE lab_tests ALTER COLUMN test_name DROP NOT NULL;`,
+    );
+
+    // 14.5 LAB TEST ITEMS TABLE (For Combo Packages)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lab_test_items (
         id SERIAL PRIMARY KEY,
@@ -290,31 +319,142 @@ const initDatabase = async () => {
       );
     `);
 
-    // 14. DEVICES TABLE
+    // 15. DEVICES TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS devices (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         device_image VARCHAR(255),
-        amount DECIMAL(10, 2) DEFAULT 0,
+        amount DECIMAL(10,2) DEFAULT 0,
         is_rghs BOOLEAN DEFAULT FALSE,
-        discount DECIMAL(5, 2) DEFAULT 0,
-        rghs_discount DECIMAL(5, 2) DEFAULT 0,
+        discount DECIMAL(5,2) DEFAULT 0,
+        rghs_discount DECIMAL(5,2) DEFAULT 0,
         status INT DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // 15. GENERAL ITEMS TABLE
+    // 16. GENERAL ITEMS TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS general_items (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         image VARCHAR(255),
-        amount DECIMAL(10, 2) DEFAULT 0,
-        discount DECIMAL(5, 2) DEFAULT 0,
+        amount DECIMAL(10,2) DEFAULT 0,
+        discount DECIMAL(5,2) DEFAULT 0,
         status INT DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 17. USERS TABLE (Mobile App Users)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        mobile VARCHAR(20) UNIQUE NOT NULL,
+        password VARCHAR(255),
+        otp VARCHAR(6),
+        address TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Ensure new columns exist for users
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS first_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS otp VARCHAR(6),
+      ADD COLUMN IF NOT EXISTS address TEXT;
+    `);
+
+    // 18. USER CART TABLE (Mobile App Cart)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_cart (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        item_id INTEGER NOT NULL,
+        item_type VARCHAR(50) NOT NULL,
+        item_name VARCHAR(255),
+        price DECIMAL(10,2) DEFAULT 0,
+        quantity INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 19. ORDERS TABLE (Mobile App Orders)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        order_name VARCHAR(255),
+        order_image TEXT,
+        delivery_date DATE,
+        order_type VARCHAR(50),
+        beneficiary_name VARCHAR(255),
+        delivery_address TEXT,
+        total_items INTEGER DEFAULT 0,
+        total_amount DECIMAL(10,2) DEFAULT 0,
+        total_mrp DECIMAL(10,2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 20. ORDER ITEMS TABLE (Mobile App Order Items)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+        item_name VARCHAR(255),
+        item_details TEXT,
+        quantity INTEGER DEFAULT 1,
+        price DECIMAL(10,2) DEFAULT 0,
+        mrp DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 21. SYSTEM SETTINGS TABLE
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id SERIAL PRIMARY KEY,
+        dashboard_name VARCHAR(255) DEFAULT 'SOMACY',
+        short_name VARCHAR(50) DEFAULT 'NK',
+        currency VARCHAR(10) DEFAULT '₹',
+        timezone VARCHAR(100) DEFAULT 'Asia/Kolkata',
+        show_prescription VARCHAR(10) DEFAULT 'Yes',
+        logo VARCHAR(255),
+
+        user_app_id VARCHAR(255),
+        user_app_key VARCHAR(255),
+        delivery_app_id VARCHAR(255),
+        delivery_app_key VARCHAR(255),
+
+        store_name VARCHAR(255),
+        store_mobile VARCHAR(20),
+        store_email VARCHAR(255),
+        contact_us VARCHAR(20),
+        store_address TEXT,
+        about_us TEXT,
+
+        latitude VARCHAR(50),
+        longitude VARCHAR(50),
+        delivery_radius VARCHAR(50),
+        per_km_price VARCHAR(50),
+
+        referral_amount VARCHAR(50),
+        sign_up_amount VARCHAR(50),
+
+        privacy_policy TEXT,
+        terms_conditions TEXT,
+
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -322,71 +462,33 @@ const initDatabase = async () => {
 
     console.log("✅ All Database Tables Ensured.");
 
-    // Check if default admin exists
+    // ─── SEED DEFAULT ADMIN ───────────────────────────────────────────────────
     const { rows } = await pool.query("SELECT * FROM admins LIMIT 1");
     if (rows.length === 0) {
       const hashedPwd = await bcrypt.hash("admin123", 10);
       await pool.query(
         "INSERT INTO admins (name, email, password) VALUES ($1, $2, $3)",
-        ["Admin", "admin@somacy.com", hashedPwd]
+        ["Admin", "admin@somacy.com", hashedPwd],
       );
       console.log("👤 Default admin created: admin@somacy.com / admin123");
     }
 
-    // 13. SYSTEM SETTINGS TABLE
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS system_settings(
-      id SERIAL PRIMARY KEY,
-      dashboard_name VARCHAR(255) DEFAULT 'SOMACY',
-      short_name VARCHAR(50) DEFAULT 'NK',
-      currency VARCHAR(10) DEFAULT '₹',
-      timezone VARCHAR(100) DEFAULT 'Asia/Kolkata',
-      show_prescription VARCHAR(10) DEFAULT 'Yes',
-      logo VARCHAR(255),
-
-      user_app_id VARCHAR(255),
-      user_app_key VARCHAR(255),
-      delivery_app_id VARCHAR(255),
-      delivery_app_key VARCHAR(255),
-
-      store_name VARCHAR(255),
-      store_mobile VARCHAR(20),
-      store_email VARCHAR(255),
-      contact_us VARCHAR(20),
-      store_address TEXT,
-      about_us TEXT,
-
-      latitude VARCHAR(50),
-      longitude VARCHAR(50),
-      delivery_radius VARCHAR(50),
-      per_km_price VARCHAR(50),
-
-      referral_amount VARCHAR(50),
-      sign_up_amount VARCHAR(50),
-
-      privacy_policy TEXT,
-      terms_conditions TEXT,
-
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    // ─── SEED DEFAULT SYSTEM SETTINGS ────────────────────────────────────────
+    const { rows: settingsRows } = await pool.query(
+      "SELECT * FROM system_settings LIMIT 1",
     );
-    `);
-
-    // Ensure default settings row exists
-    const { rows: settingsRows } = await pool.query("SELECT * FROM system_settings LIMIT 1");
     if (settingsRows.length === 0) {
       await pool.query(`
-        INSERT INTO system_settings(
-      dashboard_name, short_name, currency, timezone, show_prescription,
-      store_name, store_email
-    ) VALUES(
-      'SOMACY', 'NK', '₹', 'Asia/Kolkata', 'Yes',
-      'Somacy Medical', 'admin@somacy.com'
-    )
+        INSERT INTO system_settings (
+          dashboard_name, short_name, currency, timezone, show_prescription,
+          store_name, store_email
+        ) VALUES (
+          'SOMACY', 'NK', '₹', 'Asia/Kolkata', 'Yes',
+          'Somacy Medical', 'admin@somacy.com'
+        )
       `);
       console.log("⚙️ Default system settings created.");
     }
-
   } catch (err) {
     console.error("❌ Error initializing Database:", err.message);
   }

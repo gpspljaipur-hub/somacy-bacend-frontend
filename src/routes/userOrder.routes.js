@@ -20,4 +20,10 @@ router.post("/add", upload.single("image"), orderController.addOrder);
 router.post("/list", upload.none(), orderController.getOrders);
 router.post("/delete", upload.none(), orderController.deleteOrder);
 
+router.post(
+  "/order-details",
+  upload.none(), // this parses form-data
+  orderController.getOrderDetails,
+);
+
 module.exports = router;

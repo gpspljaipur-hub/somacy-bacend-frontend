@@ -62,7 +62,7 @@ const { v4: uuidv4 } = require("uuid");
 //   } catch (err) {
 //     res.status(500).json({ status: 0, message: err.message });
 //   }
-// };
+// }
 
 const addLabTest = async (req, res) => {
   try {
