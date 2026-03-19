@@ -20,7 +20,7 @@ const UPLOAD_DIRS = [
   "src/uploads/payment_gateways",
   "src/uploads/prescriptions",
   "src/uploads/testimonials",
-  "uploads/orders",
+  "src/uploads/orders",
 ];
 
 UPLOAD_DIRS.forEach((dir) => {

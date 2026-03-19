@@ -3,7 +3,7 @@ const orderModel = require("../models/userOrder.model");
 // ADD ORDER
 const addOrder = async (req, res) => {
   try {
-    const image = req.file ? req.file.filename : null;
+    const image = req.file ? `/uploads/orders/${req.file.filename}` : null;
 
     const items = JSON.parse(req.body.items || "[]");
 
