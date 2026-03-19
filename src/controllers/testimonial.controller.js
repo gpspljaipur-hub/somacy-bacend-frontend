@@ -34,10 +34,8 @@ const addTestimonial = async (req, res) => {
         // Image logic
         let image = null;
         if (req.file) {
-            image = `uploads/${req.file.filename}`;
-        }
-        else if (req.body.image) {
-            // Sometimes strictly passed as url string if no file upload? usually file upload.
+            image = `/uploads/testimonials/${req.file.filename}`;
+        } else if (req.body.image) {
             image = req.body.image;
         }
 

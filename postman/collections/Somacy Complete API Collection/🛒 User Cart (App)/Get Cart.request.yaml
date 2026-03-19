@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/user-cart/list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: user_id
+      value: ""
+order: 2000

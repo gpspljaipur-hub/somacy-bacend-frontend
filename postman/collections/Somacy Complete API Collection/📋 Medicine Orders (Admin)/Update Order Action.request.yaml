@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/medicine-orders/update"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: current_status
+      value: ""
+    - type: text
+      key: order_flow
+      value: ""
+    - type: text
+      key: delivery_boy_id
+      value: ""
+order: 4000

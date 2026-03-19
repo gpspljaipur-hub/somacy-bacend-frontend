@@ -1,0 +1,48 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/signup"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: ""
+    - type: text
+      key: mobile
+      value: ""
+    - type: text
+      key: email
+      value: ""
+    - type: text
+      key: role
+      value: ""
+    - type: text
+      key: password
+      value: ""
+    - type: text
+      key: confirm_password
+      value: ""
+    - type: text
+      key: store_name
+      value: ""
+    - type: text
+      key: store_address
+      value: ""
+    - type: text
+      key: city
+      value: ""
+    - type: text
+      key: state
+      value: ""
+    - type: text
+      key: pincode
+      value: ""
+    - type: text
+      key: drug_license_no
+      value: ""
+    - type: text
+      key: gst_no
+      value: ""
+order: 2000

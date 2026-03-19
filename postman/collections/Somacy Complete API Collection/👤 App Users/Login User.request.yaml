@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/users/login"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: mobile
+      value: ""
+    - type: text
+      key: password
+      value: ""
+order: 2000

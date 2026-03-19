@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/auth/user-profile"
-method: GET
-order: 7000

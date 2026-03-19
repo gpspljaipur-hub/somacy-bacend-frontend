@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/blogs/list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: page
+      value: ""
+    - type: text
+      key: limit
+      value: ""
+    - type: text
+      key: search
+      value: ""
+    - type: text
+      key: category
+      value: ""
+order: 2000

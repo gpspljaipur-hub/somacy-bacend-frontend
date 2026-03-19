@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/banners/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: category_id
+      value: ""
+    - type: text
+      key: status
+      value: ""
+    - type: file
+      key: banner_image
+      src:
+        - ""
+order: 1000

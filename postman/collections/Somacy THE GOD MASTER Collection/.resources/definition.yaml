@@ -1,5 +1,0 @@
-$kind: collection
-description: The absolute complete documentation for every single API with 100%
-  verified formdata keys.
-variables:
-  baseUrl: http://localhost:5001/api

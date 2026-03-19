@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{base_url}}/api/general_items/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: item_name
+      value: ""
+    - type: text
+      key: description
+      value: ""
+    - type: text
+      key: price
+      value: ""
+    - type: text
+      key: discount
+      value: ""
+    - type: text
+      key: status
+      value: ""
+    - type: text
+      key: category_id
+      value: ""
+    - type: file
+      key: image
+      src:
+        - ""
+order: 3000

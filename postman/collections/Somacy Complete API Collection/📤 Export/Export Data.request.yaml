@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/export/"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: type
+      value: ""
+    - type: text
+      key: start_date
+      value: ""
+    - type: text
+      key: end_date
+      value: ""
+order: 1000

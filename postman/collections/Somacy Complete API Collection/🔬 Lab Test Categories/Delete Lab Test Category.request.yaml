@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-test-categories/delete"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+order: 5000

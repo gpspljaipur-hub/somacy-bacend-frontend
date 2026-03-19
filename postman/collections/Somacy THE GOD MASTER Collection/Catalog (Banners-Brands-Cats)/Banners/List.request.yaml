@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/banners"
-method: POST
-order: 2000

@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/brands"
-method: POST
-order: 2000

@@ -1,5 +1,35 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
+// ─── Ensure all upload directories exist on startup ───────────────────────────
+const UPLOAD_DIRS = [
+  "src/uploads",
+  "src/uploads/banners",
+  "src/uploads/brands",
+  "src/uploads/categories",
+  "src/uploads/coupons",
+  "src/uploads/medicines",
+  "src/uploads/lab_tests",
+  "src/uploads/lab_test_categories",
+  "src/uploads/doctors",
+  "src/uploads/blogs",
+  "src/uploads/devices",
+  "src/uploads/general_items",
+  "src/uploads/payment_gateways",
+  "src/uploads/prescriptions",
+  "src/uploads/testimonials",
+  "uploads/orders",
+];
+
+UPLOAD_DIRS.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`📁 Created upload dir: ${dir}`);
+  }
+});
+// ──────────────────────────────────────────────────────────────────────────────
 
 const app = express();
 const categoryRoutes = require("./routes/category.routes");

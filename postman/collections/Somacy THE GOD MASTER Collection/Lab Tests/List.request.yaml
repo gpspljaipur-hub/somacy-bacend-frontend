@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/lab-tests"
-method: POST
-order: 2000

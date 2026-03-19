@@ -1,0 +1,82 @@
+$kind: http-request
+url: "{{base_url}}/api/settings/"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: dashboardName
+      value: ""
+    - type: text
+      key: shortName
+      value: ""
+    - type: text
+      key: currency
+      value: ""
+    - type: text
+      key: timezone
+      value: ""
+    - type: text
+      key: showPrescription
+      value: ""
+    - type: text
+      key: userAppId
+      value: ""
+    - type: text
+      key: userAppKey
+      value: ""
+    - type: text
+      key: deliveryAppId
+      value: ""
+    - type: text
+      key: deliveryAppKey
+      value: ""
+    - type: text
+      key: storeName
+      value: ""
+    - type: text
+      key: storeMobile
+      value: ""
+    - type: text
+      key: storeEmail
+      value: ""
+    - type: text
+      key: contactUs
+      value: ""
+    - type: text
+      key: storeAddress
+      value: ""
+    - type: text
+      key: aboutUs
+      value: ""
+    - type: text
+      key: latitude
+      value: ""
+    - type: text
+      key: longitude
+      value: ""
+    - type: text
+      key: deliveryRadius
+      value: ""
+    - type: text
+      key: perKmPrice
+      value: ""
+    - type: text
+      key: referralAmount
+      value: ""
+    - type: text
+      key: signUpAmount
+      value: ""
+    - type: text
+      key: privacyPolicy
+      value: ""
+    - type: text
+      key: termsConditions
+      value: ""
+    - type: file
+      key: logo
+      src:
+        - ""
+order: 2000

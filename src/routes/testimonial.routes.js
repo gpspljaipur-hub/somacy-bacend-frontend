@@ -7,7 +7,7 @@ const path = require("path");
 // Configure Multer for Image Upload
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "src/uploads/");
+        cb(null, "src/uploads/testimonials");
     },
     filename: (req, file, cb) => {
         cb(null, `testimonial_${Date.now()}${path.extname(file.originalname)}`);
@@ -22,7 +22,5 @@ const upload = multer({
 router.post("/", upload.none(), controller.getTestimonials);
 router.post("/add", upload.single("image"), controller.addTestimonial);
 router.delete("/delete", upload.none(), controller.deleteTestimonial);
-
-// Assuming update is not requested or can be added later if needed.
 
 module.exports = router;

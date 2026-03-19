@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/api/customers/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: name
+      value: ""
+    - type: text
+      key: email
+      value: ""
+    - type: text
+      key: mobile
+      value: ""
+    - type: text
+      key: total_orders
+      value: ""
+    - type: text
+      key: status
+      value: ""
+    - type: text
+      key: address
+      value: ""
+order: 3000

@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/api/appointments/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: patient_name
+      value: ""
+    - type: text
+      key: patient_id
+      value: ""
+    - type: text
+      key: consultation_mode
+      value: ""
+    - type: text
+      key: appointment_date
+      value: ""
+    - type: text
+      key: appointment_time
+      value: ""
+    - type: text
+      key: status
+      value: ""
+order: 4000

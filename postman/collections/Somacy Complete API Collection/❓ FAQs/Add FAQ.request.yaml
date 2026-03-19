@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/faqs/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: question
+      value: ""
+    - type: text
+      key: answer
+      value: ""
+    - type: text
+      key: status
+      value: ""
+order: 1000

@@ -1,0 +1,73 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-tests/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: lab_category
+      value: ""
+    - type: text
+      key: test_name
+      value: ""
+    - type: text
+      key: package_name
+      value: ""
+    - type: text
+      key: amount
+      value: ""
+    - type: text
+      key: discount
+      value: ""
+    - type: text
+      key: rghs_discount
+      value: ""
+    - type: text
+      key: is_rghs
+      value: ""
+    - type: text
+      key: description
+      value: ""
+    - type: text
+      key: lab_test_type
+      value: ""
+    - type: text
+      key: status
+      value: ""
+    - type: text
+      key: test_ids
+      value: ""
+    - type: text
+      key: is_popular
+      value: ""
+    - type: text
+      key: lab_partner_name
+      value: ""
+    - type: text
+      key: lab_rating
+      value: ""
+    - type: text
+      key: lab_accreditation
+      value: ""
+    - type: text
+      key: free_home_collection
+      value: ""
+    - type: text
+      key: report_turnaround_time
+      value: ""
+    - type: text
+      key: test_prerequisites
+      value: ""
+    - type: text
+      key: parameters_count
+      value: ""
+    - type: text
+      key: included_parameters_details
+      value: ""
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

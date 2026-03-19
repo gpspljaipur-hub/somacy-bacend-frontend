@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/api/delivery-boys/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: name
+      value: ""
+    - type: text
+      key: mobile
+      value: ""
+    - type: text
+      key: email
+      value: ""
+    - type: text
+      key: commission_percentage
+      value: ""
+    - type: text
+      key: address
+      value: ""
+    - type: text
+      key: status
+      value: ""
+order: 3000

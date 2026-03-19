@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/appointments/user-list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: user_id
+      value: ""
+    - type: text
+      key: page
+      value: ""
+    - type: text
+      key: limit
+      value: ""
+order: 2000

@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/testimonials/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: ""
+    - type: text
+      key: designation
+      value: ""
+    - type: text
+      key: content
+      value: ""
+    - type: text
+      key: status
+      value: ""
+    - type: file
+      key: image
+      src:
+        - ""
+order: 2000
