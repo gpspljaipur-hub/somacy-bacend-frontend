@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/customers"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: page
+      value: "1"
+    - type: text
+      key: limit
+      value: "20"
+order: 2000

@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/verify-email-change"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: ""
+    - type: text
+      key: otp
+      value: ""
+    - type: text
+      key: new_email
+      value: ""
+order: 6000

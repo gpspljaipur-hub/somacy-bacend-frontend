@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/faqs/add"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: question
+      value: Q?
+    - type: text
+      key: answer
+      value: A!
+order: 2000

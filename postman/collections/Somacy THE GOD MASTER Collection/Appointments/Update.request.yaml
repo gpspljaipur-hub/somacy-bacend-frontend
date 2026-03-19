@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/appointments/update"
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: patient_name
+      value: Updated Patient
+order: 4000

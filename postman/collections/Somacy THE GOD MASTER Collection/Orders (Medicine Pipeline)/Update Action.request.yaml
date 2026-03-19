@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/medicine-orders/update"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: status
+      value: Confirmed
+order: 4000

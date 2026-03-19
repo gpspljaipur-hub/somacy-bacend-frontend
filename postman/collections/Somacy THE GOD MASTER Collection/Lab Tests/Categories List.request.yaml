@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/lab-test-categories/list"
+method: POST
+order: 3000

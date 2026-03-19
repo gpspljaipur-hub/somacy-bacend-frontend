@@ -1,0 +1,53 @@
+$kind: http-request
+url: "{{baseUrl}}/medicines/add"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: medicine_name
+      value: MedName
+    - type: text
+      key: category_id
+      value: "1"
+    - type: text
+      key: brand_id
+      value: "1"
+    - type: text
+      key: medicine_description
+      value: ""
+    - type: text
+      key: medicine_type
+      value: ""
+    - type: text
+      key: price
+      value: "100"
+    - type: text
+      key: medicine_discount
+      value: "0"
+    - type: text
+      key: rghs_discount
+      value: "0"
+    - type: text
+      key: stock_status
+      value: In Stock
+    - type: text
+      key: stock_quantity
+      value: "100"
+    - type: text
+      key: prescription_required
+      value: "false"
+    - type: text
+      key: status
+      value: "1"
+    - type: text
+      key: pack_type
+      value: ""
+    - type: text
+      key: medicine_rghs
+      value: "false"
+    - type: file
+      key: medicine_images
+      src:
+        - ""
+order: 1000

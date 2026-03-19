@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/users/register"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Admin
+    - type: text
+      key: email
+      value: admin@somacy.com
+    - type: text
+      key: password
+      value: admin123
+    - type: text
+      key: role
+      value: superadmin
+order: 4000

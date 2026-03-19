@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/medicines/delete"
+method: DELETE
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+order: 4000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/medicines/update"
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: medicine_name
+      value: Updated Name
+    - type: file
+      key: medicine_images
+      src:
+        - ""
+order: 3000

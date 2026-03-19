@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/categories/add"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: category_name
+      value: ""
+    - type: file
+      key: category_image
+      src:
+        - ""
+order: 1000

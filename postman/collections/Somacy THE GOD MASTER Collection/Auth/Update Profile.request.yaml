@@ -1,0 +1,44 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/update"
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: John Doe
+    - type: text
+      key: email
+      value: john@doe.com
+    - type: text
+      key: mobile
+      value: "1234567890"
+    - type: text
+      key: role
+      value: user
+    - type: text
+      key: store_name
+      value: ""
+    - type: text
+      key: store_address
+      value: ""
+    - type: text
+      key: city
+      value: ""
+    - type: text
+      key: state
+      value: ""
+    - type: text
+      key: pincode
+      value: ""
+    - type: text
+      key: drug_license_no
+      value: ""
+    - type: text
+      key: gst_no
+      value: ""
+    - type: file
+      key: imageUrl
+      src:
+        - ""
+order: 5000

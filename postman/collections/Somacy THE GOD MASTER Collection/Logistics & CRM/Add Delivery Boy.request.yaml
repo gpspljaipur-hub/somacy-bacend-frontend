@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/delivery-boys/add"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: ""
+    - type: text
+      key: mobile
+      value: ""
+    - type: text
+      key: email
+      value: ""
+    - type: text
+      key: commission_percentage
+      value: "5"
+    - type: text
+      key: address
+      value: ""
+    - type: text
+      key: status
+      value: "1"
+order: 1000

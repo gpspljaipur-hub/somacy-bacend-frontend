@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/cart/delete-item"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+      description: Item ID in cart
+order: 4000
