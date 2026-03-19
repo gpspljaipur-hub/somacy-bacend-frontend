@@ -1,127 +1,99 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD BLOG
 const addBlog = async ({ title, description, content, image, category, status }) => {
-    const query = `
-        INSERT INTO blogs (title, description, content, image, category, status)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *;
-    `;
-    const values = [
-        title,
-        description || null,
-        content || null,
-        image || null,
-        category || 'All',
-        status !== undefined ? Number(status) : 1
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.blogs.create({
+        data: {
+            title,
+            description: description || null,
+            content: content || null,
+            image: image || null,
+            category: category || 'All',
+            status: status !== undefined ? parseInt(status) : 1
+        }
+    });
 };
 
 // GET ALL BLOGS
 const getAllBlogs = async (limit = 10, offset = 0, search = '', category = 'All') => {
-    let query = "SELECT * FROM blogs";
-    const params = [];
-
-    let whereClause = [];
+    let where = {};
     if (search) {
-        whereClause.push(`(title ILIKE $${params.length + 1} OR description ILIKE $${params.length + 1})`);
-        params.push(`%${search}%`);
+        where.OR = [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } }
+        ];
     }
     if (category && category !== 'All') {
-        whereClause.push(`category = $${params.length + 1}`);
-        params.push(category);
+        where.category = category;
     }
 
-    if (whereClause.length > 0) {
-        query += " WHERE " + whereClause.join(" AND ");
-    }
-
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const { rows } = await pool.query(query, params);
-    return rows;
+    return await prisma.blogs.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
 };
 
 // COUNT BLOGS
 const countBlogs = async (search = '', category = 'All') => {
-    let query = "SELECT COUNT(*) FROM blogs";
-    const params = [];
-
-    let whereClause = [];
+    let where = {};
     if (search) {
-        whereClause.push(`(title ILIKE $${params.length + 1} OR description ILIKE $${params.length + 1})`);
-        params.push(`%${search}%`);
+        where.OR = [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } }
+        ];
     }
     if (category && category !== 'All') {
-        whereClause.push(`category = $${params.length + 1}`);
-        params.push(category);
+        where.category = category;
     }
 
-    if (whereClause.length > 0) {
-        query += " WHERE " + whereClause.join(" AND ");
-    }
-
-    const { rows } = await pool.query(query, params);
-    return parseInt(rows[0].count);
+    return await prisma.blogs.count({ where });
 };
 
 // GET BLOG BY ID
 const getBlogById = async (id) => {
-    const { rows } = await pool.query("SELECT * FROM blogs WHERE id = $1", [id]);
-    return rows[0];
+    return await prisma.blogs.findUnique({
+        where: { id: parseInt(id) }
+    });
 };
 
 // GET RECENT BLOGS
 const getRecentBlogs = async (limit = 5, excludeId = null) => {
-    let query = "SELECT * FROM blogs";
-    const params = [limit];
-
+    let where = {};
     if (excludeId) {
-        query += " WHERE id != $2";
-        params.push(excludeId);
+        where.id = { not: parseInt(excludeId) };
     }
 
-    query += " ORDER BY created_at DESC LIMIT $1";
-    const { rows } = await pool.query(query, params);
-    return rows;
+    return await prisma.blogs.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        take: parseInt(limit)
+    });
 };
 
 // UPDATE BLOG
 const updateBlog = async (id, data) => {
-    const query = `
-        UPDATE blogs
-        SET title = $1,
-            description = $2,
-            content = $3,
-            image = $4,
-            category = $5,
-            status = $6,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $7
-        RETURNING *;
-    `;
-    const values = [
-        data.title,
-        data.description,
-        data.content,
-        data.image,
-        data.category,
-        data.status,
-        id
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.blogs.update({
+        where: { id: parseInt(id) },
+        data: {
+            title: data.title,
+            description: data.description,
+            content: data.content,
+            image: data.image,
+            category: data.category,
+            status: data.status !== undefined ? parseInt(data.status) : undefined,
+            updated_at: new Date()
+        }
+    });
 };
 
 // DELETE BLOG
 const deleteBlog = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM blogs WHERE id = ANY($1::int[])", [ids.map(Number)]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.blogs.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 module.exports = {

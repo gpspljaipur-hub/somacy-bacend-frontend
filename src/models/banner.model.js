@@ -1,107 +1,100 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD BANNER
 const addBanner = async ({ banner_image, category_id, status }) => {
-    const query = `
-    INSERT INTO banners (banner_image, category_id, status)
-    VALUES ($1, $2, $3)
-    RETURNING *;
-  `;
-
-    const values = [banner_image, category_id || null, status || 1];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.banners.create({
+        data: {
+            banner_image: banner_image,
+            category_id: category_id ? parseInt(category_id) : null,
+            status: status !== undefined ? parseInt(status) : 1
+        }
+    });
 };
 
 // GET ALL BANNERS (With Category Name)
 const getAllBanners = async (limit = 20, offset = 0, search = '') => {
-    let query = `
-    SELECT b.*, c.category_name 
-    FROM banners b
-    LEFT JOIN categories c ON b.category_id = c.id
-  `;
-    const params = [];
-    if (search) {
-        query += " WHERE c.category_name ILIKE $1";
-        params.push(`%${search}%`);
-    }
-    query += ` ORDER BY b.id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+    const banners = await prisma.banners.findMany({
+        where: search ? {
+            categories: {
+                category_name: { contains: search, mode: 'insensitive' }
+            }
+        } : {},
+        include: {
+            categories: true
+        },
+        orderBy: { id: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
 
-    const { rows } = await pool.query(query, params);
-    return rows;
+    return banners.map(b => ({
+        ...b,
+        category_name: b.categories ? b.categories.category_name : null
+    }));
 };
-
-// ...
 
 // COUNT BANNERS
 const countBanners = async (search = '') => {
-    let query = `
-    SELECT COUNT(*) 
-    FROM banners b
-    LEFT JOIN categories c ON b.category_id = c.id
-    `;
-    const params = [];
-    if (search) {
-        query += " WHERE c.category_name ILIKE $1";
-        params.push(`%${search}%`);
-    }
-    const { rows } = await pool.query(query, params);
-    return parseInt(rows[0].count);
+    return await prisma.banners.count({
+        where: search ? {
+            categories: {
+                category_name: { contains: search, mode: 'insensitive' }
+            }
+        } : {}
+    });
 };
 
 // GET BANNER BY ID
 const getBannerById = async (id) => {
-    const query = `
-    SELECT b.*, c.category_name 
-    FROM banners b
-    LEFT JOIN categories c ON b.category_id = c.id
-    WHERE b.id = $1
-    `;
-    const { rows } = await pool.query(query, [id]);
-    return rows[0];
+    const b = await prisma.banners.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+            categories: true
+        }
+    });
+    if (!b) return null;
+    return {
+        ...b,
+        category_name: b.categories ? b.categories.category_name : null
+    };
 };
 
 // UPDATE BANNER
 const updateBanner = async (id, data) => {
-    const query = `
-    UPDATE banners
-    SET banner_image = $1,
-        category_id = $2,
-        status = $3,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $4
-    RETURNING *;
-  `;
-
-    const values = [
-        data.banner_image,
-        data.category_id || null,
-        data.status || 1,
-        id,
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.banners.update({
+        where: { id: parseInt(id) },
+        data: {
+            banner_image: data.banner_image,
+            category_id: data.category_id ? parseInt(data.category_id) : null,
+            status: data.status !== undefined ? parseInt(data.status) : undefined,
+            updated_at: new Date()
+        }
+    });
 };
 
 // DELETE BANNER (Supports bulk)
 const deleteBanner = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM banners WHERE id = ANY($1::int[])", [ids]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.banners.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 // GET ALL BANNERS FOR EXPORT
 const getExportData = async () => {
-    const query = `
-    SELECT b.id, b.banner_image, c.category_name, b.status, b.created_at
-    FROM banners b
-    LEFT JOIN categories c ON b.category_id = c.id
-    ORDER BY b.id DESC
-  `;
-    const { rows } = await pool.query(query);
-    return rows;
+    const banners = await prisma.banners.findMany({
+        include: {
+            categories: true
+        },
+        orderBy: { id: 'desc' }
+    });
+    return banners.map(b => ({
+        id: b.id,
+        banner_image: b.banner_image,
+        category_name: b.categories ? b.categories.category_name : null,
+        status: b.status,
+        created_at: b.created_at
+    }));
 };
 
 module.exports = {

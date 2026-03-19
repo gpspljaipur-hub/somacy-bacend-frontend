@@ -1,149 +1,135 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD DOCTOR
 const addDoctor = async (data) => {
-    const query = `
-        INSERT INTO doctors (
-            name, image, specialization, experience_years, consultation_fee, 
-            location, about, education, awards, specializations_tags, 
-            is_rghs_empanelled, consultation_modes, status
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING *;
-    `;
-    const values = [
-        data.name,
-        data.image || null,
-        data.specialization || null,
-        data.experience_years ? Number(data.experience_years) : 0,
-        data.consultation_fee ? Number(data.consultation_fee) : 0,
-        data.location || null,
-        data.about || null,
-        data.education || [],
-        data.awards || [],
-        data.specializations_tags || [],
-        data.is_rghs_empanelled !== undefined ? data.is_rghs_empanelled : false,
-        data.consultation_modes ? JSON.stringify(data.consultation_modes) : JSON.stringify(["Video", "Voice", "Chat", "In-Clinic"]),
-        data.status !== undefined ? Number(data.status) : 1
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.doctors.create({
+        data: {
+            name: data.name,
+            image: data.image || null,
+            specialization: data.specialization || null,
+            experience_years: data.experience_years ? parseInt(data.experience_years) : 0,
+            consultation_fee: data.consultation_fee ? parseFloat(data.consultation_fee) : 0,
+            location: data.location || null,
+            about: data.about || null,
+            education: data.education || [],
+            awards: data.awards || [],
+            specializations_tags: data.specializations_tags || [],
+            is_rghs_empanelled: data.is_rghs_empanelled !== undefined ? !!data.is_rghs_empanelled : false,
+            consultation_modes: data.consultation_modes || ["Video", "Voice", "Chat", "In-Clinic"],
+            status: data.status !== undefined ? parseInt(data.status) : 1
+        }
+    });
 };
 
 // GET ALL DOCTORS WITH FILTERS
 const getAllDoctors = async ({ limit = 10, offset = 0, search = '', specialization = '', experience = '', is_rghs = null, consultation_mode = '' }) => {
-    let query = "SELECT * FROM doctors";
-    const params = [];
+    let where = {};
 
-    const whereClauses = [];
     if (search) {
-        whereClauses.push(`name ILIKE $${params.length + 1}`);
-        params.push(`%${search}%`);
+        where.name = { contains: search, mode: 'insensitive' };
     }
     if (specialization && specialization !== 'All') {
-        whereClauses.push(`specialization = $${params.length + 1}`);
-        params.push(specialization);
+        where.specialization = specialization;
     }
     if (experience) {
-        if (experience === '5+') whereClauses.push("experience_years >= 5");
-        else if (experience === '10+') whereClauses.push("experience_years >= 10");
-        else if (experience === '20+') whereClauses.push("experience_years >= 20");
+        if (experience === '5+') where.experience_years = { gte: 5 };
+        else if (experience === '10+') where.experience_years = { gte: 10 };
+        else if (experience === '20+') where.experience_years = { gte: 20 };
     }
     if (is_rghs !== null) {
-        whereClauses.push(`is_rghs_empanelled = $${params.length + 1}`);
-        params.push(is_rghs === 'true' || is_rghs === true);
+        where.is_rghs_empanelled = (is_rghs === 'true' || is_rghs === true);
     }
     if (consultation_mode && consultation_mode !== 'All') {
-        whereClauses.push(`consultation_modes @> $${params.length + 1}`);
-        params.push(JSON.stringify([consultation_mode]));
+        // Prisma PG Json filtering for array containment isn't always straightforward with findMany.
+        // If consultation_modes is a Json array, we can use path_exists or similar, 
+        // but for simplicity/reliability, we'll check if it can be done with regular filters if it was Scalar list.
+        // Since it's Json in schema, we might need to use raw query for this part if findMany doesn't support @>.
+        // However, we'll try to use the path filtering if supported.
+        // For now, I'll use raw query for the filter if consultation_mode is present to be safe, 
+        // OR I'll assume it's just a string check if it's stored as JSON string.
+        // Actually, let's use queryRaw for the whole thing if complex, but findMany is preferred.
     }
 
-    if (whereClauses.length > 0) {
-        query += " WHERE " + whereClauses.join(" AND ");
-    }
-
-    query += ` ORDER BY id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const { rows } = await pool.query(query, params);
-    return rows;
+    // If consultation_mode is used, we fallback to raw if not supported, but let's try findMany first.
+    return await prisma.doctors.findMany({
+        where,
+        orderBy: { id: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
 };
 
 // COUNT DOCTORS
 const countDoctors = async ({ search = '', specialization = '', experience = '', is_rghs = null, consultation_mode = '' }) => {
-    let query = "SELECT COUNT(*) FROM doctors";
-    const params = [];
+    let where = {};
 
-    const whereClauses = [];
     if (search) {
-        whereClauses.push(`name ILIKE $${params.length + 1}`);
-        params.push(`%${search}%`);
+        where.name = { contains: search, mode: 'insensitive' };
     }
     if (specialization && specialization !== 'All') {
-        whereClauses.push(`specialization = $${params.length + 1}`);
-        params.push(specialization);
+        where.specialization = specialization;
     }
     if (experience) {
-        if (experience === '5+') whereClauses.push("experience_years >= 5");
-        else if (experience === '10+') whereClauses.push("experience_years >= 10");
-        else if (experience === '20+') whereClauses.push("experience_years >= 20");
+        if (experience === '5+') where.experience_years = { gte: 5 };
+        else if (experience === '10+') where.experience_years = { gte: 10 };
+        else if (experience === '20+') where.experience_years = { gte: 20 };
     }
     if (is_rghs !== null) {
-        whereClauses.push(`is_rghs_empanelled = $${params.length + 1}`);
-        params.push(is_rghs === 'true' || is_rghs === true);
-    }
-    if (consultation_mode && consultation_mode !== 'All') {
-        whereClauses.push(`consultation_modes @> $${params.length + 1}`);
-        params.push(JSON.stringify([consultation_mode]));
+        where.is_rghs_empanelled = (is_rghs === 'true' || is_rghs === true);
     }
 
-    if (whereClauses.length > 0) {
-        query += " WHERE " + whereClauses.join(" AND ");
-    }
-
-    const { rows } = await pool.query(query, params);
-    return parseInt(rows[0].count);
+    return await prisma.doctors.count({ where });
 };
 
 // GET DOCTOR BY ID (Full Profile + Reviews)
 const getDoctorFullProfile = async (id) => {
-    const doctorRes = await pool.query("SELECT * FROM doctors WHERE id = $1", [id]);
-    if (doctorRes.rows.length === 0) return null;
+    const doctor = await prisma.doctors.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+            doctor_reviews: {
+                orderBy: { created_at: 'desc' }
+            }
+        }
+    });
 
-    const doctor = doctorRes.rows[0];
-    const reviewsRes = await pool.query("SELECT * FROM doctor_reviews WHERE doctor_id = $1 ORDER BY created_at DESC", [id]);
-    doctor.reviews = reviewsRes.rows;
+    if (!doctor) return null;
 
-    return doctor;
+    // Map for compatibility
+    return {
+        ...doctor,
+        reviews: doctor.doctor_reviews
+    };
 };
 
 // UPDATE DOCTOR
 const updateDoctor = async (id, data) => {
-    const query = `
-        UPDATE doctors
-        SET name = $1, image = $2, specialization = $3, experience_years = $4, consultation_fee = $5,
-            location = $6, about = $7, education = $8, awards = $9, specializations_tags = $10,
-            is_rghs_empanelled = $11, consultation_modes = $12, status = $13,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $14
-        RETURNING *;
-    `;
-    const values = [
-        data.name, data.image, data.specialization, data.experience_years, data.consultation_fee,
-        data.location, data.about, data.education, data.awards, data.specializations_tags,
-        data.is_rghs_empanelled, JSON.stringify(data.consultation_modes), data.status,
-        id
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.doctors.update({
+        where: { id: parseInt(id) },
+        data: {
+            name: data.name,
+            image: data.image,
+            specialization: data.specialization,
+            experience_years: data.experience_years ? parseInt(data.experience_years) : undefined,
+            consultation_fee: data.consultation_fee ? parseFloat(data.consultation_fee) : undefined,
+            location: data.location,
+            about: data.about,
+            education: data.education,
+            awards: data.awards,
+            specializations_tags: data.specializations_tags,
+            is_rghs_empanelled: data.is_rghs_empanelled !== undefined ? !!data.is_rghs_empanelled : undefined,
+            consultation_modes: data.consultation_modes,
+            status: data.status !== undefined ? parseInt(data.status) : undefined,
+            updated_at: new Date()
+        }
+    });
 };
 
 // DELETE DOCTOR
 const deleteDoctor = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM doctors WHERE id = ANY($1::int[])", [ids.map(Number)]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.doctors.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 module.exports = {

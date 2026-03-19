@@ -1,95 +1,70 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD PAYMENT GATEWAY
 const addPaymentGateway = async ({ gateway_name, gateway_image, status }) => {
-    const query = `
-    INSERT INTO payment_gateways (gateway_name, gateway_image, status)
-    VALUES ($1, $2, $3)
-    RETURNING *;
-  `;
-
-    const values = [
-        gateway_name || null,
-        gateway_image || null,
-        status || 1,
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.payment_gateways.create({
+        data: {
+            gateway_name: gateway_name || null,
+            gateway_image: gateway_image || null,
+            status: status !== undefined ? parseInt(status) : 1,
+        }
+    });
 };
 
 // GET ALL PAYMENT GATEWAYS
 const getAllPaymentGateways = async (limit = 20, offset = 0, search = '') => {
-    let query = "SELECT * FROM payment_gateways";
-    const params = [];
-
-    if (search) {
-        query += " WHERE gateway_name ILIKE $1";
-        params.push(`%${search}%`);
-    }
-
-    query += ` ORDER BY id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const { rows } = await pool.query(query, params);
-    return rows;
+    return await prisma.payment_gateways.findMany({
+        where: search ? {
+            gateway_name: { contains: search, mode: 'insensitive' }
+        } : {},
+        orderBy: { id: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
 };
 
 // GET COUNT OF PAYMENT GATEWAYS
 const countPaymentGateways = async (search = '') => {
-    let query = "SELECT COUNT(*) FROM payment_gateways";
-    const params = [];
-
-    if (search) {
-        query += " WHERE gateway_name ILIKE $1";
-        params.push(`%${search}%`);
-    }
-
-    const { rows } = await pool.query(query, params);
-    return parseInt(rows[0].count);
+    return await prisma.payment_gateways.count({
+        where: search ? {
+            gateway_name: { contains: search, mode: 'insensitive' }
+        } : {}
+    });
 };
 
 // GET PAYMENT GATEWAY BY ID
 const getPaymentGatewayById = async (id) => {
-    const { rows } = await pool.query("SELECT * FROM payment_gateways WHERE id = $1", [
-        id,
-    ]);
-    return rows[0];
+    return await prisma.payment_gateways.findUnique({
+        where: { id: parseInt(id) }
+    });
 };
 
 // UPDATE PAYMENT GATEWAY
 const updatePaymentGateway = async (id, data) => {
-    const query = `
-    UPDATE payment_gateways
-    SET gateway_name = $1,
-        gateway_image = $2,
-        status = $3,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $4
-    RETURNING *;
-  `;
-
-    const values = [
-        data.gateway_name || null,
-        data.gateway_image || null,
-        data.status || 1,
-        id,
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.payment_gateways.update({
+        where: { id: parseInt(id) },
+        data: {
+            gateway_name: data.gateway_name,
+            gateway_image: data.gateway_image,
+            status: data.status !== undefined ? parseInt(data.status) : undefined,
+            updated_at: new Date()
+        }
+    });
 };
 
 // DELETE PAYMENT GATEWAY (Supports bulk)
 const deletePaymentGateway = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM payment_gateways WHERE id = ANY($1::int[])", [ids]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.payment_gateways.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 // GET ALL PAYMENT GATEWAYS FOR EXPORT
 const getExportData = async () => {
-    const { rows } = await pool.query("SELECT id, gateway_name, status, created_at FROM payment_gateways ORDER BY id DESC");
-    return rows;
+    return await prisma.payment_gateways.findMany({
+        orderBy: { id: 'desc' }
+    });
 };
 
 module.exports = {

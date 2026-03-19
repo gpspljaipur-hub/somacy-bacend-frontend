@@ -1,11 +1,10 @@
 const cartModel = require("../models/cart.model");
 const medicineModel = require("../models/medicine.model");
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 const xlsx = require("xlsx");
 
 // SET CART ITEM (Supports Multiple & Auto-Sync)
 const setCart = async (req, res) => {
-    const client = await pool.connect();
     try {
         const { order_id } = req.body;
         let incomingItems = req.body.items;
@@ -19,7 +18,7 @@ const setCart = async (req, res) => {
             try {
                 incomingItems = JSON.parse(incomingItems);
             } catch (e) {
-                // Not a JSON string, fallback to single item logic below
+                // Not a JSON string, fallback to single item logic
             }
         }
 
@@ -35,114 +34,140 @@ const setCart = async (req, res) => {
             }
         }
 
-        // 1. Fetch order details to know the order_type
-        const orderRes = await client.query("SELECT order_type, delivery_charge, current_status, order_flow FROM medicine_orders WHERE id = $1", [order_id]);
-        if (orderRes.rows.length === 0) {
-            client.release();
-            return res.status(404).json({ status: 0, message: "Order not found." });
-        }
-        const orderInfo = orderRes.rows[0];
-        const orderType = orderInfo.order_type || 'Non-RGHS';
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Fetch order details
+            const orderInfo = await tx.medicine_orders.findUnique({
+                where: { id: parseInt(order_id) }
+            });
 
-        await client.query("BEGIN");
-
-        const addedItems = [];
-
-        // 2. Process each item
-        for (const itemData of incomingItems) {
-            const { medicine_id, num_strips, quantity } = itemData;
-
-            const medRes = await client.query("SELECT * FROM medicines WHERE id = $1", [medicine_id]);
-            const medicine = medRes.rows[0];
-            if (!medicine) continue;
-
-            const pricePerStrip = parseFloat(medicine.price);
-
-            // Use RGHS discount only if it's an RGHS order AND the medicine is RGHS-eligible
-            const isRghsCovered = (orderType === 'RGHS' && medicine.medicine_rghs === true);
-            const discountRate = (isRghsCovered ? parseFloat(medicine.rghs_discount) : parseFloat(medicine.medicine_discount)) || 0;
-
-            const discountPerStrip = (pricePerStrip * (discountRate / 100));
-            const finalPricePerStrip = pricePerStrip - discountPerStrip;
-
-            const medsPerStrip = parseInt(medicine.pack_type) || 1;
-
-            let totalQuantity = 0;
-            let itemTotal = 0;
-
-            if (quantity && parseInt(quantity) > 0) {
-                totalQuantity = parseInt(quantity);
-                const pricePerMed = finalPricePerStrip / medsPerStrip;
-                itemTotal = totalQuantity * pricePerMed;
-            } else {
-                const strips = parseInt(num_strips) || 0;
-                totalQuantity = strips * medsPerStrip;
-                itemTotal = strips * finalPricePerStrip;
+            if (!orderInfo) {
+                throw new Error("Order not found.");
             }
 
-            // --- Stock Validation ---
-            // Check existing quantity of this medicine in the cart for this order
-            const existingRes = await client.query("SELECT SUM(quantity) as existing_qty FROM system_cart WHERE order_id = $1 AND medicine_id = $2", [order_id, medicine_id]);
-            const existingQty = parseInt(existingRes.rows[0].existing_qty || 0);
-            const totalRequested = existingQty + totalQuantity;
+            const orderType = orderInfo.order_type || 'Non-RGHS';
+            const addedItems = [];
 
-            if (totalRequested > (medicine.stock_quantity || 0)) {
-                await client.query("ROLLBACK");
-                client.release();
-                return res.status(400).json({
-                    status: 0,
-                    message: `Insufficient stock for ${medicine.medicine_name}. Available: ${medicine.stock_quantity || 0}, in cart: ${existingQty}`
+            // 2. Process each item
+            for (const itemData of incomingItems) {
+                const { medicine_id, num_strips, quantity } = itemData;
+
+                const medicine = await tx.medicines.findUnique({
+                    where: { id: parseInt(medicine_id) }
+                });
+                if (!medicine) continue;
+
+                const pricePerStrip = parseFloat(medicine.price);
+                const isRghsCovered = (orderType === 'RGHS' && medicine.medicine_rghs === true);
+                const discountRate = (isRghsCovered ? parseFloat(medicine.rghs_discount) : parseFloat(medicine.medicine_discount)) || 0;
+
+                const discountPerStrip = (pricePerStrip * (discountRate / 100));
+                const finalPricePerStrip = pricePerStrip - discountPerStrip;
+                const medsPerStrip = parseInt(medicine.pack_type) || 1;
+
+                let totalQuantity = 0;
+                let itemTotal = 0;
+
+                if (quantity && parseInt(quantity) > 0) {
+                    totalQuantity = parseInt(quantity);
+                    const pricePerMed = finalPricePerStrip / medsPerStrip;
+                    itemTotal = totalQuantity * pricePerMed;
+                } else {
+                    const strips = parseInt(num_strips) || 0;
+                    totalQuantity = strips * medsPerStrip;
+                    itemTotal = strips * finalPricePerStrip;
+                }
+
+                // --- Stock Validation ---
+                const existingQtyAggr = await tx.system_cart.aggregate({
+                    where: { order_id: parseInt(order_id), medicine_id: parseInt(medicine_id) },
+                    _sum: { quantity: true }
+                });
+                const existingQty = existingQtyAggr._sum.quantity || 0;
+                const totalRequested = existingQty + totalQuantity;
+
+                if (totalRequested > (medicine.stock_quantity || 0)) {
+                    throw new Error(`Insufficient stock for ${medicine.medicine_name}. Available: ${medicine.stock_quantity || 0}, in cart: ${existingQty}`);
+                }
+
+                const newCartItem = await tx.system_cart.create({
+                    data: {
+                        order_id: parseInt(order_id),
+                        medicine_id: parseInt(medicine_id),
+                        num_strips: parseInt(num_strips) || 0,
+                        pack_type: medicine.pack_type || "1",
+                        quantity: totalQuantity,
+                        price: pricePerStrip,
+                        discount: discountRate,
+                        item_total: itemTotal
+                    }
+                });
+                addedItems.push(newCartItem);
+            }
+
+            // 3. Sync to main order (medicine_order_items)
+            await tx.medicine_order_items.deleteMany({ where: { order_id: parseInt(order_id) } });
+            
+            const cartItems = await tx.system_cart.findMany({
+                where: { order_id: parseInt(order_id) }
+            });
+
+            if (cartItems.length > 0) {
+                await tx.medicine_order_items.createMany({
+                    data: cartItems.map(c => ({
+                        order_id: c.order_id,
+                        medicine_id: c.medicine_id,
+                        quantity: c.quantity,
+                        price: c.price,
+                        discount: c.discount,
+                        item_total: c.item_total
+                    }))
                 });
             }
-            // ------------------------
 
-            const insertCartQuery = `
-                INSERT INTO system_cart (order_id, medicine_id, num_strips, pack_type, quantity, price, discount, item_total)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING *;
-            `;
-            const { rows } = await client.query(insertCartQuery, [
-                order_id, medicine_id, parseInt(num_strips) || 0, medicine.pack_type || "1",
-                totalQuantity, pricePerStrip, discountRate, itemTotal
-            ]);
-            addedItems.push(rows[0]);
-        }
+            // 4. Update order totals
+            const nonRghsItemsAggr = await tx.system_cart.findMany({
+                where: {
+                    order_id: parseInt(order_id),
+                    NOT: (orderType === 'RGHS') ? {
+                        medicines: { medicine_rghs: true }
+                    } : undefined
+                }
+            });
 
-        // 3. Sync to main order (medicine_order_items)
-        await client.query("DELETE FROM medicine_order_items WHERE order_id = $1", [order_id]);
-        await client.query(`
-            INSERT INTO medicine_order_items (order_id, medicine_id, quantity, price, discount, item_total)
-            SELECT order_id, medicine_id, quantity, price, discount, item_total
-            FROM system_cart
-            WHERE order_id = $1;
-        `, [order_id]);
+            // Note: Since Prisma filtering on relations in findMany can be complex, 
+            // we'll fetch and filter if needed, OR use aggregate if it was simpler.
+            // But let's calculate here for accuracy.
+            let subTotal = 0;
+            const allItems = await tx.system_cart.findMany({
+                where: { order_id: parseInt(order_id) },
+                include: { medicines: true }
+            });
 
-        // 4. Update the main order's totals only (excluding RGHS items if it's an RGHS order)
-        const totalsRes = await client.query(`
-            SELECT SUM(sc.item_total) as sub_total_price 
-            FROM system_cart sc
-            JOIN medicines m ON sc.medicine_id = m.id
-            WHERE sc.order_id = $1 
-            AND NOT ($2 = 'RGHS' AND m.medicine_rghs = TRUE)
-        `, [order_id, orderType]);
-        const subTotal = parseFloat(totalsRes.rows[0].sub_total_price || 0);
-        const deliveryCharge = parseFloat(orderInfo.delivery_charge || 0);
-        const total = subTotal + deliveryCharge;
+            for (const c of allItems) {
+                const isItemRghsCovered = (orderType === 'RGHS' && c.medicines && c.medicines.medicine_rghs === true);
+                if (!isItemRghsCovered) {
+                    subTotal += parseFloat(c.item_total);
+                }
+            }
 
-        const updateOrderQuery = "UPDATE medicine_orders SET sub_total_price = $1, total_price = $2 WHERE id = $3";
-        const updateParams = [subTotal, total, order_id];
+            const deliveryCharge = parseFloat(orderInfo.delivery_charge || 0);
+            const total = subTotal + deliveryCharge;
 
-        await client.query(updateOrderQuery, updateParams);
+            await tx.medicine_orders.update({
+                where: { id: parseInt(order_id) },
+                data: {
+                    sub_total_price: subTotal,
+                    total_price: total
+                }
+            });
 
-        await client.query("COMMIT");
+            return addedItems;
+        });
 
-        res.status(200).json({ status: 1, message: "Cart synced to order successfully.", data: addedItems });
+        res.status(200).json({ status: 1, message: "Cart synced to order successfully.", data: result });
     } catch (err) {
-        await client.query("ROLLBACK");
         console.error(err);
         res.status(500).json({ status: 0, message: err.message });
-    } finally {
-        client.release();
     }
 };
 
@@ -193,7 +218,6 @@ const deleteItem = async (req, res) => {
 
 // UPDATE CART (Clear and Set)
 const updateCart = async (req, res) => {
-    const client = await pool.connect();
     try {
         const { order_id } = req.body;
         let incomingItems = req.body.items;
@@ -202,7 +226,6 @@ const updateCart = async (req, res) => {
             return res.status(400).json({ status: 0, message: "Order ID is required." });
         }
 
-        // Support both single item and bulk array
         if (typeof incomingItems === 'string') {
             try {
                 incomingItems = JSON.parse(incomingItems);
@@ -221,107 +244,118 @@ const updateCart = async (req, res) => {
             }
         }
 
-        // 1. Fetch order details
-        const orderRes = await client.query("SELECT order_type, delivery_charge FROM medicine_orders WHERE id = $1", [order_id]);
-        if (orderRes.rows.length === 0) {
-            client.release();
-            return res.status(404).json({ status: 0, message: "Order not found." });
-        }
-        const orderInfo = orderRes.rows[0];
-        const orderType = orderInfo.order_type || 'Non-RGHS';
+        const result = await prisma.$transaction(async (tx) => {
+            const orderInfo = await tx.medicine_orders.findUnique({
+                where: { id: parseInt(order_id) }
+            });
+            if (!orderInfo) {
+                throw new Error("Order not found.");
+            }
+            const orderType = orderInfo.order_type || 'Non-RGHS';
 
-        await client.query("BEGIN");
+            // 2. Clear existing cart
+            await tx.system_cart.deleteMany({ where: { order_id: parseInt(order_id) } });
 
-        // 2. Clear existing cart for this order
-        await client.query("DELETE FROM system_cart WHERE order_id = $1", [order_id]);
+            const updatedItems = [];
+            for (const itemData of incomingItems) {
+                const { medicine_id, num_strips, quantity } = itemData;
 
-        const updatedItems = [];
+                const medicine = await tx.medicines.findUnique({
+                    where: { id: parseInt(medicine_id) }
+                });
+                if (!medicine) continue;
 
-        // 3. Process new items
-        for (const itemData of incomingItems) {
-            const { medicine_id, num_strips, quantity } = itemData;
+                const pricePerStrip = parseFloat(medicine.price);
+                const isRghsCovered = (orderType === 'RGHS' && medicine.medicine_rghs === true);
+                const discountRate = (isRghsCovered ? parseFloat(medicine.rghs_discount) : parseFloat(medicine.medicine_discount)) || 0;
 
-            const medRes = await client.query("SELECT * FROM medicines WHERE id = $1", [medicine_id]);
-            const medicine = medRes.rows[0];
-            if (!medicine) continue;
+                const discountPerStrip = (pricePerStrip * (discountRate / 100));
+                const finalPricePerStrip = pricePerStrip - discountPerStrip;
+                const medsPerStrip = parseInt(medicine.pack_type) || 1;
 
-            const pricePerStrip = parseFloat(medicine.price);
+                let totalQuantity = 0;
+                let itemTotal = 0;
 
-            // Use RGHS discount only if it's an RGHS order AND the medicine is RGHS-eligible
-            const isRghsCovered = (orderType === 'RGHS' && medicine.medicine_rghs === true);
-            const discountRate = (isRghsCovered ? parseFloat(medicine.rghs_discount) : parseFloat(medicine.medicine_discount)) || 0;
+                if (quantity && parseInt(quantity) > 0) {
+                    totalQuantity = parseInt(quantity);
+                    const pricePerMed = finalPricePerStrip / medsPerStrip;
+                    itemTotal = totalQuantity * pricePerMed;
+                } else {
+                    const strips = parseInt(num_strips) || 0;
+                    totalQuantity = strips * medsPerStrip;
+                    itemTotal = strips * finalPricePerStrip;
+                }
 
-            const discountPerStrip = (pricePerStrip * (discountRate / 100));
-            const finalPricePerStrip = pricePerStrip - discountPerStrip;
+                if (totalQuantity > (medicine.stock_quantity || 0)) {
+                    throw new Error(`Insufficient stock for ${medicine.medicine_name}. Available: ${medicine.stock_quantity || 0}`);
+                }
 
-            const medsPerStrip = parseInt(medicine.pack_type) || 1;
-
-            let totalQuantity = 0;
-            let itemTotal = 0;
-
-            if (quantity && parseInt(quantity) > 0) {
-                totalQuantity = parseInt(quantity);
-                const pricePerMed = finalPricePerStrip / medsPerStrip;
-                itemTotal = totalQuantity * pricePerMed;
-            } else {
-                const strips = parseInt(num_strips) || 0;
-                totalQuantity = strips * medsPerStrip;
-                itemTotal = strips * finalPricePerStrip;
+                const newCartItem = await tx.system_cart.create({
+                    data: {
+                        order_id: parseInt(order_id),
+                        medicine_id: parseInt(medicine_id),
+                        num_strips: parseInt(num_strips) || 0,
+                        pack_type: medicine.pack_type || "1",
+                        quantity: totalQuantity,
+                        price: pricePerStrip,
+                        discount: discountRate,
+                        item_total: itemTotal
+                    }
+                });
+                updatedItems.push(newCartItem);
             }
 
-            // --- Stock Validation ---
-            if (totalQuantity > (medicine.stock_quantity || 0)) {
-                await client.query("ROLLBACK");
-                client.release();
-                return res.status(400).json({
-                    status: 0,
-                    message: `Insufficient stock for ${medicine.medicine_name}. Available: ${medicine.stock_quantity || 0}`
+            // 4. Sync to main order
+            await tx.medicine_order_items.deleteMany({ where: { order_id: parseInt(order_id) } });
+            
+            const cartItems = await tx.system_cart.findMany({
+                where: { order_id: parseInt(order_id) }
+            });
+
+            if (cartItems.length > 0) {
+                await tx.medicine_order_items.createMany({
+                    data: cartItems.map(c => ({
+                        order_id: c.order_id,
+                        medicine_id: c.medicine_id,
+                        quantity: c.quantity,
+                        price: c.price,
+                        discount: c.discount,
+                        item_total: c.item_total
+                    }))
                 });
             }
-            // ------------------------
 
-            const insertCartQuery = `
-                INSERT INTO system_cart (order_id, medicine_id, num_strips, pack_type, quantity, price, discount, item_total)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING *;
-            `;
-            const { rows } = await client.query(insertCartQuery, [
-                order_id, medicine_id, parseInt(num_strips) || 0, medicine.pack_type || "1",
-                totalQuantity, pricePerStrip, discountRate, itemTotal
-            ]);
-            updatedItems.push(rows[0]);
-        }
+            // 5. Update order totals
+            let subTotal = 0;
+            const allItems = await tx.system_cart.findMany({
+                where: { order_id: parseInt(order_id) },
+                include: { medicines: true }
+            });
 
-        // 4. Sync to main order
-        await client.query("DELETE FROM medicine_order_items WHERE order_id = $1", [order_id]);
-        await client.query(`
-            INSERT INTO medicine_order_items (order_id, medicine_id, quantity, price, discount, item_total)
-            SELECT order_id, medicine_id, quantity, price, discount, item_total
-            FROM system_cart
-            WHERE order_id = $1;
-        `, [order_id]);
+            for (const c of allItems) {
+                const isItemRghsCovered = (orderType === 'RGHS' && c.medicines && c.medicines.medicine_rghs === true);
+                if (!isItemRghsCovered) {
+                    subTotal += parseFloat(c.item_total);
+                }
+            }
 
-        // 5. Update order totals (excluding RGHS items if it's an RGHS order)
-        const totalsRes = await client.query(`
-            SELECT SUM(sc.item_total) as sub_total_price 
-            FROM system_cart sc
-            JOIN medicines m ON sc.medicine_id = m.id
-            WHERE sc.order_id = $1 
-            AND NOT ($2 = 'RGHS' AND m.medicine_rghs = TRUE)
-        `, [order_id, orderType]);
-        const subTotal = parseFloat(totalsRes.rows[0].sub_total_price || 0);
-        const deliveryCharge = parseFloat(orderInfo.delivery_charge || 0);
-        const total = subTotal + deliveryCharge;
+            const deliveryCharge = parseFloat(orderInfo.delivery_charge || 0);
+            const total = subTotal + deliveryCharge;
 
-        await client.query("UPDATE medicine_orders SET sub_total_price = $1, total_price = $2 WHERE id = $3", [subTotal, total, order_id]);
+            await tx.medicine_orders.update({
+                where: { id: parseInt(order_id) },
+                data: {
+                    sub_total_price: subTotal,
+                    total_price: total
+                }
+            });
 
-        await client.query("COMMIT");
-        res.status(200).json({ status: 1, message: "Cart updated successfully.", data: updatedItems });
+            return updatedItems;
+        });
+
+        res.status(200).json({ status: 1, message: "Cart updated successfully.", data: result });
     } catch (err) {
-        await client.query("ROLLBACK");
         res.status(500).json({ status: 0, message: err.message });
-    } finally {
-        client.release();
     }
 };
 

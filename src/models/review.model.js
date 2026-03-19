@@ -1,41 +1,63 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD REVIEW
 const addReview = async (data) => {
-    const query = `
-        INSERT INTO doctor_reviews (doctor_id, patient_name, rating, comment)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *;
-    `;
-    const values = [data.doctor_id, data.patient_name, data.rating || 5, data.comment];
-    const { rows } = await pool.query(query, values);
+    return await prisma.$transaction(async (tx) => {
+        const review = await tx.doctor_reviews.create({
+            data: {
+                doctor_id: parseInt(data.doctor_id),
+                patient_name: data.patient_name,
+                rating: data.rating || 5,
+                comment: data.comment
+            }
+        });
 
-    // Update doctor average rating and reviews count
-    await pool.query(`
-        UPDATE doctors 
-        SET rating = (SELECT AVG(rating) FROM doctor_reviews WHERE doctor_id = $1),
-            reviews_count = (SELECT COUNT(*) FROM doctor_reviews WHERE doctor_id = $1)
-        WHERE id = $1
-    `, [data.doctor_id]);
+        // Update doctor average rating and reviews count
+        const stats = await tx.doctor_reviews.aggregate({
+            where: { doctor_id: parseInt(data.doctor_id) },
+            _avg: { rating: true },
+            _count: { id: true }
+        });
 
-    return rows[0];
+        await tx.doctors.update({
+            where: { id: parseInt(data.doctor_id) },
+            data: {
+                rating: stats._avg.rating || 0,
+                reviews_count: stats._count.id || 0
+            }
+        });
+
+        return review;
+    });
 };
 
 // DELETE REVIEW
 const deleteReview = async (id) => {
-    const { rows } = await pool.query("SELECT doctor_id FROM doctor_reviews WHERE id = $1", [id]);
-    if (rows.length === 0) return;
-    const doctor_id = rows[0].doctor_id;
+    return await prisma.$transaction(async (tx) => {
+        const review = await tx.doctor_reviews.findUnique({
+            where: { id: parseInt(id) }
+        });
+        if (!review) return;
 
-    await pool.query("DELETE FROM doctor_reviews WHERE id = $1", [id]);
+        await tx.doctor_reviews.delete({
+            where: { id: parseInt(id) }
+        });
 
-    // Update doctor average rating and reviews count
-    await pool.query(`
-        UPDATE doctors 
-        SET rating = COALESCE((SELECT AVG(rating) FROM doctor_reviews WHERE doctor_id = $1), 0),
-            reviews_count = (SELECT COUNT(*) FROM doctor_reviews WHERE doctor_id = $1)
-        WHERE id = $1
-    `, [doctor_id]);
+        // Update doctor average rating and reviews count
+        const stats = await tx.doctor_reviews.aggregate({
+            where: { doctor_id: review.doctor_id },
+            _avg: { rating: true },
+            _count: { id: true }
+        });
+
+        await tx.doctors.update({
+            where: { id: review.doctor_id },
+            data: {
+                rating: stats._avg.rating || 0,
+                reviews_count: stats._count.id || 0
+            }
+        });
+    });
 };
 
 module.exports = {

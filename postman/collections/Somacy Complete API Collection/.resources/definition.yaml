@@ -1,4 +1,4 @@
 $kind: collection
 variables:
-  base_url: http://localhost:3000
+  base_url: http://localhost:5001
   token: ""

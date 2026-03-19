@@ -1,83 +1,109 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // SET CART (Add or Update)
 const setCartItem = async (data) => {
-    const { order_id, medicine_id, num_strips, pack_type, quantity, price, discount, item_total } = data;
-
-    const query = `
-        INSERT INTO system_cart (order_id, medicine_id, num_strips, pack_type, quantity, price, discount, item_total)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *;
-    `;
-    const values = [order_id, medicine_id, num_strips, pack_type, quantity, price, discount, item_total];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.system_cart.create({
+        data: {
+            order_id: data.order_id ? parseInt(data.order_id) : null,
+            medicine_id: data.medicine_id ? parseInt(data.medicine_id) : null,
+            num_strips: data.num_strips ? parseInt(data.num_strips) : 1,
+            pack_type: data.pack_type || null,
+            quantity: data.quantity ? parseInt(data.quantity) : 1,
+            price: data.price ? parseFloat(data.price) : 0,
+            discount: data.discount ? parseFloat(data.discount) : 0,
+            item_total: data.item_total ? parseFloat(data.item_total) : 0
+        }
+    });
 };
 
 // LIST CART DATA BY ORDER ID
 const getCartByOrderId = async (orderId, limit = 20, offset = 0) => {
-    const query = `
-        SELECT c.*, m.medicine_name, m.medicine_type 
-        FROM system_cart c
-        LEFT JOIN medicines m ON c.medicine_id = m.id
-        WHERE c.order_id = $1
-        ORDER BY c.id ASC
-        LIMIT $2 OFFSET $3;
-    `;
-    const { rows } = await pool.query(query, [orderId, limit, offset]);
-    return rows;
+    const items = await prisma.system_cart.findMany({
+        where: { order_id: parseInt(orderId) },
+        include: {
+            medicines: true
+        },
+        orderBy: { id: 'asc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
+
+    return items.map(c => ({
+        ...c,
+        medicine_name: c.medicines ? c.medicines.medicine_name : null,
+        medicine_type: c.medicines ? c.medicines.medicine_type : null
+    }));
 };
 
 // COUNT CART ITEMS BY ORDER ID
 const countCartItemsByOrderId = async (orderId) => {
-    const query = "SELECT COUNT(*) FROM system_cart WHERE order_id = $1";
-    const { rows } = await pool.query(query, [orderId]);
-    return parseInt(rows[0].count);
+    return await prisma.system_cart.count({
+        where: { order_id: parseInt(orderId) }
+    });
 };
 
 // LIST ALL CART DATA
 const getAllCartItems = async (limit = 20, offset = 0) => {
-    const query = `
-        SELECT c.*, m.medicine_name, m.medicine_type, o.customer_id
-        FROM system_cart c
-        LEFT JOIN medicines m ON c.medicine_id = m.id
-        LEFT JOIN medicine_orders o ON c.order_id = o.id
-        ORDER BY c.id DESC
-        LIMIT $1 OFFSET $2;
-    `;
-    const { rows } = await pool.query(query, [limit, offset]);
-    return rows;
+    const items = await prisma.system_cart.findMany({
+        include: {
+            medicines: true,
+            medicine_orders: true
+        },
+        orderBy: { id: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
+
+    return items.map(c => ({
+        ...c,
+        medicine_name: c.medicines ? c.medicines.medicine_name : null,
+        medicine_type: c.medicines ? c.medicines.medicine_type : null,
+        customer_id: c.medicine_orders ? c.medicine_orders.customer_id : null
+    }));
 };
 
 // COUNT ALL CART ITEMS
 const countAllCartItems = async () => {
-    const query = "SELECT COUNT(*) FROM system_cart";
-    const { rows } = await pool.query(query);
-    return parseInt(rows[0].count);
+    return await prisma.system_cart.count();
 };
 
 // DELETE ITEM FROM CART (Supports bulk)
 const deleteCartItem = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM system_cart WHERE id = ANY($1::int[])", [ids]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.system_cart.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 // CLEAR CART FOR AN ORDER
 const clearCartByOrderId = async (orderId) => {
-    await pool.query("DELETE FROM system_cart WHERE order_id = $1", [orderId]);
+    await prisma.system_cart.deleteMany({
+        where: { order_id: parseInt(orderId) }
+    });
 };
 
 // GET ALL CART ITEMS FOR EXPORT
 const getExportData = async () => {
-    const query = `
-        SELECT c.id, c.order_id, m.medicine_name, (m.medicine_images)[1] as medicine_image, c.num_strips, c.pack_type, c.quantity, c.price, c.discount, c.item_total, c.created_at
-        FROM system_cart c
-        LEFT JOIN medicines m ON c.medicine_id = m.id
-        ORDER BY c.id DESC;
-    `;
-    const { rows } = await pool.query(query);
-    return rows;
+    const items = await prisma.system_cart.findMany({
+        include: {
+            medicines: true
+        },
+        orderBy: { id: 'desc' }
+    });
+
+    return items.map(c => ({
+        id: c.id,
+        order_id: c.order_id,
+        medicine_name: c.medicines ? c.medicines.medicine_name : null,
+        medicine_image: (c.medicines && c.medicines.medicine_images) ? c.medicines.medicine_images[0] : null,
+        num_strips: c.num_strips,
+        pack_type: c.pack_type,
+        quantity: c.quantity,
+        price: c.price,
+        discount: c.discount,
+        item_total: c.item_total,
+        created_at: c.created_at
+    }));
 };
 
 module.exports = {

@@ -1,82 +1,58 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD TO CART
 const addToCart = async (user_id, item_id, item_type, item_name, price) => {
-  const checkQuery = `
- SELECT * FROM user_cart
- WHERE user_id=$1 AND item_id=$2 AND item_type=$3
- `;
+    const existing = await prisma.user_cart.findFirst({
+        where: {
+            user_id: parseInt(user_id),
+            item_id: parseInt(item_id),
+            item_type: item_type
+        }
+    });
 
-  const existing = await pool.query(checkQuery, [user_id, item_id, item_type]);
+    if (existing) {
+        return await prisma.user_cart.update({
+            where: { id: existing.id },
+            data: {
+                quantity: existing.quantity + 1
+            }
+        });
+    }
 
-  if (existing.rows.length > 0) {
-    const updateQuery = `
-   UPDATE user_cart
-   SET quantity = quantity + 1
-   WHERE user_id=$1 AND item_id=$2 AND item_type=$3
-   RETURNING *
-   `;
-
-    const { rows } = await pool.query(updateQuery, [
-      user_id,
-      item_id,
-      item_type,
-    ]);
-
-    return rows[0];
-  }
-
-  const insertQuery = `
- INSERT INTO user_cart (user_id,item_id,item_type,item_name,price)
- VALUES ($1,$2,$3,$4,$5)
- RETURNING *
- `;
-
-  const { rows } = await pool.query(insertQuery, [
-    user_id,
-    item_id,
-    item_type,
-    item_name,
-    price,
-  ]);
-
-  return rows[0];
+    return await prisma.user_cart.create({
+        data: {
+            user_id: parseInt(user_id),
+            item_id: parseInt(item_id),
+            item_type: item_type,
+            item_name: item_name,
+            price: parseFloat(price),
+            quantity: 1
+        }
+    });
 };
 
 // GET CART
 const getCart = async (user_id) => {
-  const query = `
-  SELECT 
-  id,
-  item_id,
-  item_type,
-  item_name,
-  price,
-  quantity,
-  (price * quantity) as total_price
-  FROM user_cart
-  WHERE user_id = $1
-  ORDER BY id DESC
-  `;
+    const cartItems = await prisma.user_cart.findMany({
+        where: { user_id: parseInt(user_id) },
+        orderBy: { id: 'desc' }
+    });
 
-  const { rows } = await pool.query(query, [user_id]);
-
-  return rows;
-};
-
-module.exports = {
-  getCart,
+    return cartItems.map(item => ({
+        ...item,
+        total_price: parseFloat(item.price) * item.quantity
+    }));
 };
 
 // REMOVE ITEM
 const removeCartItem = async (id) => {
-  const query = `DELETE FROM user_cart WHERE id=$1`;
-
-  await pool.query(query, [id]);
+    await prisma.user_cart.delete({
+        where: { id: parseInt(id) }
+    });
 };
 
 module.exports = {
-  addToCart,
-  getCart,
-  removeCartItem,
+    addToCart,
+    getCart,
+    removeCartItem,
 };

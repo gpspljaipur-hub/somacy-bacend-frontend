@@ -1,107 +1,86 @@
-const pool = require("../config/db");
+const prisma = require("../config/prisma");
 
 // ADD COUPON
 const addCoupon = async (data) => {
-    const query = `
-    INSERT INTO coupons (
-      coupon_code, coupon_title, coupon_description, 
-      expiry_date, min_order_amount, discount, status, coupon_image
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *;
-  `;
-
-    const values = [
-        data.coupon_code || null,
-        data.coupon_title || null,
-        data.coupon_description || null,
-        data.expiry_date || null,
-        data.min_order_amount || 0,
-        data.discount || 0,
-        data.status !== undefined ? data.status : 1,
-        data.coupon_image || null,
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.coupons.create({
+        data: {
+            coupon_code: data.coupon_code || null,
+            coupon_title: data.coupon_title || null,
+            coupon_description: data.coupon_description || null,
+            expiry_date: data.expiry_date ? new Date(data.expiry_date) : null,
+            min_order_amount: data.min_order_amount ? parseFloat(data.min_order_amount) : 0,
+            discount: data.discount ? parseFloat(data.discount) : 0,
+            status: data.status !== undefined ? parseInt(data.status) : 1,
+            coupon_image: data.coupon_image || null,
+        }
+    });
 };
 
 // GET ALL COUPONS
 const getAllCoupons = async (limit = 20, offset = 0, search = '') => {
-    let query = "SELECT * FROM coupons";
-    const params = [];
-    if (search) {
-        query += " WHERE (coupon_code ILIKE $1 OR coupon_title ILIKE $1)";
-        params.push(`%${search}%`);
-    }
-    query += ` ORDER BY id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const { rows } = await pool.query(query, params);
-    return rows;
+    return await prisma.coupons.findMany({
+        where: search ? {
+            OR: [
+                { coupon_code: { contains: search, mode: 'insensitive' } },
+                { coupon_title: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {},
+        orderBy: { id: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+    });
 };
 
 // COUNT COUPONS
 const countCoupons = async (search = '') => {
-    let query = "SELECT COUNT(*) FROM coupons";
-    const params = [];
-    if (search) {
-        query += " WHERE (coupon_code ILIKE $1 OR coupon_title ILIKE $1)";
-        params.push(`%${search}%`);
-    }
-    const { rows } = await pool.query(query, params);
-    return parseInt(rows[0].count);
+    return await prisma.coupons.count({
+        where: search ? {
+            OR: [
+                { coupon_code: { contains: search, mode: 'insensitive' } },
+                { coupon_title: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {}
+    });
 };
 
 // GET COUPON BY ID
 const getCouponById = async (id) => {
-    const { rows } = await pool.query("SELECT * FROM coupons WHERE id = $1", [id]);
-    return rows[0];
+    return await prisma.coupons.findUnique({
+        where: { id: parseInt(id) }
+    });
 };
 
 // UPDATE COUPON
 const updateCoupon = async (id, data) => {
-    const query = `
-    UPDATE coupons
-    SET coupon_code = $1,
-        coupon_title = $2,
-        coupon_description = $3,
-        expiry_date = $4,
-        min_order_amount = $5,
-        discount = $6,
-        status = $7,
-        coupon_image = $8,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $9
-    RETURNING *;
-  `;
-
-    const values = [
-        data.coupon_code,
-        data.coupon_title,
-        data.coupon_description,
-        data.expiry_date,
-        data.min_order_amount,
-        data.discount,
-        data.status,
-        data.coupon_image,
-        id,
-    ];
-
-    const { rows } = await pool.query(query, values);
-    return rows[0];
+    return await prisma.coupons.update({
+        where: { id: parseInt(id) },
+        data: {
+            coupon_code: data.coupon_code,
+            coupon_title: data.coupon_title,
+            coupon_description: data.coupon_description,
+            expiry_date: data.expiry_date ? new Date(data.expiry_date) : undefined,
+            min_order_amount: data.min_order_amount ? parseFloat(data.min_order_amount) : undefined,
+            discount: data.discount ? parseFloat(data.discount) : undefined,
+            status: data.status !== undefined ? parseInt(data.status) : undefined,
+            coupon_image: data.coupon_image,
+            updated_at: new Date()
+        }
+    });
 };
 
 // DELETE COUPON (Supports bulk)
 const deleteCoupon = async (id) => {
-    const ids = Array.isArray(id) ? id : [id];
-    await pool.query("DELETE FROM coupons WHERE id = ANY($1::int[])", [ids]);
+    const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
+    await prisma.coupons.deleteMany({
+        where: { id: { in: ids } }
+    });
 };
 
 // GET ALL COUPONS FOR EXPORT
 const getExportData = async () => {
-    const { rows } = await pool.query("SELECT id, coupon_code, coupon_title, coupon_description, coupon_image, expiry_date, min_order_amount, discount, status, created_at FROM coupons ORDER BY id DESC");
-    return rows;
+    return await prisma.coupons.findMany({
+        orderBy: { id: 'desc' }
+    });
 };
 
 module.exports = {
