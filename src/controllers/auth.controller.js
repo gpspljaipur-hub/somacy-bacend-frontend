@@ -20,29 +20,29 @@ const login = async (req, res) => {
         const { identifier, password } = req.body; // identifier can be email or mobile
 
         if (!identifier || !password) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Mobile/Email and password are required",
                 data: null
-            }]);
+            });
         }
 
         const admin = await adminModel.findByMobileOrEmail(identifier);
         if (!admin) {
-            return res.status(401).json([{
-                status: 401,
+            return res.status(401).json({
+                status: 0,
                 message: "Invalid credentials",
                 data: null
-            }]);
+            });
         }
 
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
-            return res.status(401).json([{
-                status: 401,
+            return res.status(401).json({
+                status: 0,
                 message: "Invalid credentials",
                 data: null
-            }]);
+            });
         }
 
         const token = jwt.sign(
@@ -51,8 +51,8 @@ const login = async (req, res) => {
             { expiresIn: "1d" }
         );
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Login successful",
             token,
             user: {
@@ -68,13 +68,13 @@ const login = async (req, res) => {
                 pincode: admin.pincode,
                 profile_image: admin.profile_image
             }
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -87,47 +87,47 @@ const signup = async (req, res) => {
         } = req.body;
 
         if (!email || !password || !name) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Name, email and password are required",
                 data: null
-            }]);
+            });
         }
 
         if (!drug_license_no) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Drug License Number is required",
                 data: null
-            }]);
+            });
         }
 
         if (gst_no) {
             const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             if (!gstRegex.test(gst_no)) {
-                return res.status(400).json([{
-                    status: 400,
+                return res.status(400).json({
+                    status: 0,
                     message: "Invalid GST Number format",
                     data: null
-                }]);
+                });
             }
         }
 
         if (password !== confirm_password) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Passwords do not match",
                 data: null
-            }]);
+            });
         }
 
         const existingAdmin = await adminModel.findByEmail(email);
         if (existingAdmin) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Admin with this email already exists",
                 data: null
-            }]);
+            });
         }
 
         const hashedPwd = await bcrypt.hash(password, 10);
@@ -144,18 +144,18 @@ const signup = async (req, res) => {
             { expiresIn: "1d" }
         );
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Admin account created successfully",
             token,
             user: newAdmin
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -163,18 +163,18 @@ const signup = async (req, res) => {
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json([{
-            status: 400,
+        if (!email) return res.status(400).json({
+            status: 0,
             message: "Email is required",
             data: null
-        }]);
+        });
 
         const admin = await adminModel.findByEmail(email);
-        if (!admin) return res.status(404).json([{
-            status: 404,
+        if (!admin) return res.status(404).json({
+            status: 0,
             message: "User not found",
             data: null
-        }]);
+        });
 
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -192,17 +192,17 @@ const forgotPassword = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "OTP sent to your email",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -212,50 +212,50 @@ const resetPassword = async (req, res) => {
         const { email, otp, new_password, confirm_password } = req.body;
 
         if (!email || !otp || !new_password) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "All fields are required",
                 data: null
-            }]);
+            });
         }
 
         if (new_password !== confirm_password) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Passwords do not match",
                 data: null
-            }]);
+            });
         }
 
         const admin = await adminModel.findByEmail(email);
-        if (!admin) return res.status(404).json([{
-            status: 404,
+        if (!admin) return res.status(404).json({
+            status: 0,
             message: "User not found",
             data: null
-        }]);
+        });
 
         if (admin.otp !== otp || new Date() > new Date(admin.otp_expiry)) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Invalid or expired OTP",
                 data: null
-            }]);
+            });
         }
 
         const hashedPwd = await bcrypt.hash(new_password, 10);
         await adminModel.resetPassword(email, hashedPwd);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Password reset successful",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -264,7 +264,7 @@ const updateProfile = async (req, res) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
-            return res.status(401).json([{ status: 401, message: "No token provided" }]);
+            return res.status(401).json({ status: 0, message: "No token provided" });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -276,21 +276,21 @@ const updateProfile = async (req, res) => {
         if (gst_no) {
             const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             if (!gstRegex.test(gst_no)) {
-                return res.status(400).json([{
-                    status: 400,
+                return res.status(400).json({
+                    status: 0,
                     message: "Invalid GST Number format",
                     data: null
-                }]);
+                });
             }
         }
 
         const existingAdmin = await adminModel.getAdminById(adminId);
         if (!existingAdmin) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Admin not found",
                 data: null
-            }]);
+            });
         }
 
         // Handle Email Change
@@ -316,11 +316,11 @@ const updateProfile = async (req, res) => {
 
             } catch (emailErr) {
                 console.error("Failed to send OTP email:", emailErr);
-                return res.status(500).json([{
-                    status: 500,
+                return res.status(500).json({
+                    status: 0,
                     message: "Failed to send verification email. Please check the email address.",
                     data: null
-                }]);
+                });
             }
         }
 
@@ -353,18 +353,18 @@ const updateProfile = async (req, res) => {
             profile_image: profileImage
         });
 
-        res.json([{
-            status: emailVerificationRequired ? 202 : 200,
+        res.json({
+            status: emailVerificationRequired ? 1 : 1, // Status is 1 for success regardless, message handles the detail
             message: emailVerificationRequired ? "Profile updated. Please verify new email with OTP sent." : "Profile updated successfully",
             emailVerificationRequired,
             data: updated
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -372,29 +372,29 @@ const verifyEmailChange = async (req, res) => {
     try {
         const { id, otp, new_email } = req.body;
         if (!id || !otp || !new_email) {
-            return res.status(400).json([{ status: 400, message: "Missing required fields" }]);
+            return res.status(400).json({ status: 0, message: "Missing required fields" });
         }
 
         const admin = await adminModel.getAdminById(id);
-        if (!admin) return res.status(404).json([{ status: 404, message: "User not found" }]);
+        if (!admin) return res.status(404).json({ status: 0, message: "User not found" });
 
         if (admin.temp_new_email !== new_email) {
-            return res.status(400).json([{ status: 400, message: "Email mismatch" }]);
+            return res.status(400).json({ status: 0, message: "Email mismatch" });
         }
         if (admin.otp !== otp) {
-            return res.status(400).json([{ status: 400, message: "Invalid OTP" }]);
+            return res.status(400).json({ status: 0, message: "Invalid OTP" });
         }
 
         const updated = await adminModel.verifyEmailChange(id);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Email updated successfully",
             data: updated
-        }]);
+        });
 
     } catch (err) {
-        res.status(500).json([{ status: 500, message: err.message }]);
+        res.status(500).json({ status: 0, message: err.message });
     }
 };
 
@@ -404,25 +404,25 @@ const deleteProfile = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Admin ID(s) required in body",
                 data: null
-            }]);
+            });
         }
 
         await adminModel.deleteAdmin(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Account(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -438,28 +438,28 @@ const getProfile = async (req, res) => {
         const admin = await adminModel.getAdminById(decoded.id);
 
         if (!admin) {
-            return res.status(404).json([{ status: 404, message: "User not found" }]);
+            return res.status(404).json({ status: 0, message: "User not found" });
         }
 
         const { password, otp, otp_expiry, ...userWithoutSensitiveData } = admin;
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Profile fetched successfully",
             data: userWithoutSensitiveData
-        }]);
+        });
     } catch (err) {
-        res.status(401).json([{ status: 401, message: "Invalid or expired token" }]);
+        res.status(401).json({ status: 0, message: "Invalid or expired token" });
     }
 };
 
 // LOGOUT
 const logout = async (req, res) => {
-    res.json([{
-        status: 200,
+    res.json({
+        status: 1,
         message: "Logout successful",
         data: null
-    }]);
+    });
 };
 
 module.exports = {

@@ -27,17 +27,17 @@ const addBanner = async (req, res) => {
             banner = await bannerModel.getBannerById(banner.id);
         }
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Banner added successfully",
             data: banner,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -52,18 +52,18 @@ const getBanners = async (req, res) => {
         const data = await bannerModel.getAllBanners(limit, offset, search);
         const total = await bannerModel.countBanners(search);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Banners fetched successfully",
             total_count: total,
             data: data
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -73,20 +73,20 @@ const updateBanner = async (req, res) => {
         const { id, category_id, status } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Banner ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingBanner = await bannerModel.getBannerById(id);
         if (!existingBanner) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Banner not found",
                 data: null
-            }]);
+            });
         }
 
         let banner_image = existingBanner.banner_image;
@@ -106,17 +106,17 @@ const updateBanner = async (req, res) => {
         // Fetch upgraded banner with category_name
         const updated = await bannerModel.getBannerById(id);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Banner updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -126,25 +126,25 @@ const deleteBanner = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Banner ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await bannerModel.deleteBanner(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Banner(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

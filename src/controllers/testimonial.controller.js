@@ -12,19 +12,18 @@ const getTestimonials = async (req, res) => {
         const data = await testimonialModel.getAllTestimonials(limit, offset, search);
         const total = await testimonialModel.countTestimonials(search);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Testimonials fetched successfully",
             total_count: total,
             data: data
-        }]);
+        });
     } catch (err) {
-        // If table doesn't exist, this might catch it. 
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -50,17 +49,17 @@ const addTestimonial = async (req, res) => {
             status: status ? Number(status) : 1
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Testimonial added successfully",
             data: newTestimonial
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -70,25 +69,25 @@ const deleteTestimonial = async (req, res) => {
         const { id } = req.body; // or req.params depending on route setup. Customer uses body.
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "ID is required",
                 data: null
-            }]);
+            });
         }
 
         await testimonialModel.deleteTestimonial(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Testimonial(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

@@ -23,17 +23,17 @@ const addBrand = async (req, res) => {
             status: status !== undefined && !isNaN(status) ? Number(status) : 1,
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Brand added successfully",
             data: brand,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -47,18 +47,18 @@ const getBrands = async (req, res) => {
 
         const data = await brandModel.getAllBrands(limit, offset, search);
         const total = await brandModel.countBrands(search);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Brands fetched successfully",
             total_count: total,
             data: data
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -68,20 +68,20 @@ const updateBrand = async (req, res) => {
         const { id, brand_name, is_popular, status } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Brand ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingBrand = await brandModel.getBrandById(id);
         if (!existingBrand) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Brand not found",
                 data: null
-            }]);
+            });
         }
 
         let brand_image = existingBrand.brand_image;
@@ -99,17 +99,17 @@ const updateBrand = async (req, res) => {
             status: status !== undefined ? Number(status) : existingBrand.status,
         });
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Brand updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -119,25 +119,25 @@ const deleteBrand = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Brand ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await brandModel.deleteBrand(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Brand(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

@@ -56,7 +56,7 @@ const getOrders = async (req, res) => {
       status: 1,
       page,
       limit,
-      total,
+      total_count: total,
       data,
     });
   } catch (err) {

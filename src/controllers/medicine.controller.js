@@ -23,11 +23,11 @@ const addMedicine = async (req, res) => {
         // Validation: Total size cannot exceed 15MB
         const totalSize = files.reduce((acc, file) => acc + file.size, 0);
         if (totalSize > 15 * 1024 * 1024) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Total images size exceeds 15MB limit",
                 data: null
-            }]);
+            });
         }
 
         const medicine_images = files.map(file => `/uploads/medicines/${file.filename}`);
@@ -101,20 +101,20 @@ const updateMedicine = async (req, res) => {
         } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Medicine ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingMedicine = await medicineModel.getMedicineById(id);
         if (!existingMedicine) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Medicine not found",
                 data: null
-            }]);
+            });
         }
 
         const files = req.files || [];
@@ -122,11 +122,11 @@ const updateMedicine = async (req, res) => {
         // Validation: Total size cannot exceed 15MB
         const totalSize = files.reduce((acc, file) => acc + file.size, 0);
         if (totalSize > 15 * 1024 * 1024) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Total images size exceeds 15MB limit",
                 data: null
-            }]);
+            });
         }
 
         // Handle Images: explicit mixture of retained (strings in body) and new (files)
@@ -190,11 +190,11 @@ const deleteMedicine = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Medicine ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await medicineModel.deleteMedicine(id);

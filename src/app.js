@@ -33,6 +33,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/dashboard", dashboardRoutes);
 
+const faqRoutes = require("./routes/faq.routes");
+
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/banners", bannerRoutes);
@@ -55,4 +57,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/lab-test-categories", labTestCategoryRoutes);
 app.use("/api/user-cart", cartRoutes);
 app.use("/api/user-order", userOrderDetails);
+app.use("/api/faqs", faqRoutes);
+app.use("/api/blogs", require("./routes/blog.routes"));
+app.use("/api/doctors", require("./routes/doctor.routes"));
+app.use("/api/appointments", require("./routes/appointment.routes"));
+app.use("/api/reviews", require("./routes/review.routes"));
 module.exports = app;

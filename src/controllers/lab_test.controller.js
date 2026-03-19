@@ -78,12 +78,20 @@ const addLabTest = async (req, res) => {
       lab_test_type,
       status,
       test_ids,
+      is_popular,
+      lab_partner_name,
+      lab_rating,
+      lab_accreditation,
+      free_home_collection,
+      report_turnaround_time,
+      test_prerequisites,
+      parameters_count,
+      included_parameters_details
     } = req.body;
 
     const image = req.file ? `/uploads/lab_tests/${req.file.filename}` : null;
 
     let parsedTestIds = test_ids;
-
     if (typeof test_ids === "string") {
       try {
         parsedTestIds = JSON.parse(test_ids);
@@ -94,10 +102,25 @@ const addLabTest = async (req, res) => {
           .filter((id) => id);
       }
     }
+    parsedTestIds = Array.isArray(parsedTestIds) ? parsedTestIds.map((id) => Number(id)) : [];
 
-    parsedTestIds = Array.isArray(parsedTestIds)
-      ? parsedTestIds.map((id) => Number(id))
-      : [];
+    let parsedPrerequisites = test_prerequisites;
+    if (typeof test_prerequisites === "string") {
+      try {
+        parsedPrerequisites = JSON.parse(test_prerequisites);
+      } catch {
+        parsedPrerequisites = test_prerequisites.split(",").map(i => i.trim()).filter(i => i);
+      }
+    }
+
+    let parsedDetails = included_parameters_details;
+    if (typeof included_parameters_details === "string") {
+      try {
+        parsedDetails = JSON.parse(included_parameters_details);
+      } catch {
+        parsedDetails = null;
+      }
+    }
 
     const labTest = await labTestModel.addLabTest({
       lab_category,
@@ -116,6 +139,15 @@ const addLabTest = async (req, res) => {
       lab_test_type: lab_test_type || "Singular",
       status: status !== undefined ? Number(status) : 1,
       test_ids: parsedTestIds,
+      is_popular: is_popular === "true" || is_popular === "1" || is_popular === true,
+      lab_partner_name,
+      lab_rating: lab_rating ? Number(lab_rating) : 0,
+      lab_accreditation,
+      free_home_collection: free_home_collection === "true" || free_home_collection === "1" || free_home_collection === true,
+      report_turnaround_time,
+      test_prerequisites: Array.isArray(parsedPrerequisites) ? parsedPrerequisites : [],
+      parameters_count,
+      included_parameters_details: parsedDetails
     });
 
     res.status(201).json({
@@ -138,10 +170,11 @@ const getLabTests = async (req, res) => {
     const limit = parseInt(req.body.limit) || 20;
     const search = req.body.search || "";
     const type = req.body.type || null; // singular or combo
+    const categoryId = req.body.category_id || req.body.categoryId || null;
     const offset = (page - 1) * limit;
 
-    const data = await labTestModel.getAllLabTests(limit, offset, search, type);
-    const total = await labTestModel.countLabTests(search, type);
+    const data = await labTestModel.getAllLabTests(limit, offset, search, type, categoryId);
+    const total = await labTestModel.countLabTests(search, type, categoryId);
 
     res.json({
       status: 1,
@@ -169,6 +202,15 @@ const updateLabTest = async (req, res) => {
       lab_test_type,
       status,
       test_ids,
+      is_popular,
+      lab_partner_name,
+      lab_rating,
+      lab_accreditation,
+      free_home_collection,
+      report_turnaround_time,
+      test_prerequisites,
+      parameters_count,
+      included_parameters_details
     } = req.body;
 
     if (!id) {
@@ -202,6 +244,25 @@ const updateLabTest = async (req, res) => {
           .split(",")
           .map((id) => id.trim())
           .filter((id) => id);
+      }
+    }
+
+    let parsedPrerequisites = test_prerequisites !== undefined ? test_prerequisites : existing.test_prerequisites;
+    if (typeof test_prerequisites === "string") {
+      try {
+        parsedPrerequisites = JSON.parse(test_prerequisites);
+      } catch {
+        parsedPrerequisites = test_prerequisites.split(",").map(i => i.trim()).filter(i => i);
+      }
+    }
+    parsedPrerequisites = Array.isArray(parsedPrerequisites) ? parsedPrerequisites : [];
+
+    let parsedDetails = included_parameters_details !== undefined ? included_parameters_details : existing.included_parameters_details;
+    if (typeof included_parameters_details === "string") {
+      try {
+        parsedDetails = JSON.parse(included_parameters_details);
+      } catch {
+        parsedDetails = null;
       }
     }
 
@@ -245,6 +306,21 @@ const updateLabTest = async (req, res) => {
             ? parsedTestIds
             : []
           : undefined,
+      is_popular:
+        is_popular !== undefined
+          ? is_popular === "true" || is_popular === "1" || is_popular === true
+          : existing.is_popular,
+      lab_partner_name: lab_partner_name !== undefined ? lab_partner_name : existing.lab_partner_name,
+      lab_rating: lab_rating !== undefined ? Number(lab_rating) : existing.lab_rating,
+      lab_accreditation: lab_accreditation !== undefined ? lab_accreditation : existing.lab_accreditation,
+      free_home_collection:
+        free_home_collection !== undefined
+          ? free_home_collection === "true" || free_home_collection === "1" || free_home_collection === true
+          : existing.free_home_collection,
+      report_turnaround_time: report_turnaround_time !== undefined ? report_turnaround_time : existing.report_turnaround_time,
+      test_prerequisites: parsedPrerequisites,
+      parameters_count: parameters_count !== undefined ? parameters_count : existing.parameters_count,
+      included_parameters_details: parsedDetails
     });
 
     res.json({

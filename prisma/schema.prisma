@@ -1,0 +1,432 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model admins {
+  id              Int       @id @default(autoincrement())
+  name            String?   @db.VarChar(255)
+  email           String    @unique @db.VarChar(255)
+  password        String    @db.VarChar(255)
+  mobile          String?   @db.VarChar(20)
+  role            String?   @default("Admin") @db.VarChar(50)
+  store_name      String?   @db.VarChar(255)
+  store_address   String?
+  city            String?   @db.VarChar(100)
+  state           String?   @db.VarChar(100)
+  pincode         String?   @db.VarChar(20)
+  otp             String?   @db.VarChar(6)
+  otp_expiry      DateTime? @db.Timestamp(6)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+  drug_license_no String?   @db.VarChar(255)
+  gst_no          String?   @db.VarChar(20)
+  profile_image   String?
+  temp_new_email  String?   @db.VarChar(255)
+}
+
+model banners {
+  id           Int         @id @default(autoincrement())
+  banner_image String?
+  category_id  Int?
+  status       Int?        @default(1)
+  created_at   DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?   @default(now()) @db.Timestamp(6)
+  categories   categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+}
+
+model brands {
+  id          Int         @id @default(autoincrement())
+  brand_name  String?     @db.VarChar(255)
+  brand_image String?
+  is_popular  Boolean?    @default(false)
+  status      Int?        @default(1)
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?   @default(now()) @db.Timestamp(6)
+  medicines   medicines[]
+}
+
+model categories {
+  id             Int         @id @default(autoincrement())
+  category_name  String?     @db.VarChar(255)
+  category_image String?
+  status         Int?        @default(1)
+  created_at     DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?   @default(now()) @db.Timestamp(6)
+  banners        banners[]
+  medicines      medicines[]
+}
+
+model coupons {
+  id                 Int       @id @default(autoincrement())
+  coupon_code        String?   @db.VarChar(50)
+  coupon_title       String?   @db.VarChar(255)
+  coupon_description String?
+  expiry_date        DateTime? @db.Date
+  min_order_amount   Decimal?  @default(0) @db.Decimal(10, 2)
+  discount           Decimal?  @default(0) @db.Decimal(10, 2)
+  status             Int?      @default(1)
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+  coupon_image       String?   @db.VarChar(255)
+}
+
+model customers {
+  id              Int               @id @default(autoincrement())
+  name            String?           @db.VarChar(255)
+  email           String?           @db.VarChar(255)
+  mobile          String?           @db.VarChar(20)
+  total_orders    Int?              @default(0)
+  status          Int?              @default(1)
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  address         String?
+  medicine_orders medicine_orders[]
+}
+
+model delivery_boys {
+  id                    Int               @id @default(autoincrement())
+  name                  String?           @db.VarChar(255)
+  mobile                String?           @db.VarChar(20)
+  email                 String?           @db.VarChar(255)
+  commission_percentage Decimal?          @default(0) @db.Decimal(5, 2)
+  address               String?
+  status                Int?              @default(1)
+  created_at            DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?         @default(now()) @db.Timestamp(6)
+  medicine_orders       medicine_orders[]
+}
+
+model devices {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(255)
+  device_image  String?   @db.VarChar(255)
+  amount        Decimal?  @default(0) @db.Decimal(10, 2)
+  is_rghs       Boolean?  @default(false)
+  discount      Decimal?  @default(0) @db.Decimal(5, 2)
+  rghs_discount Decimal?  @default(0) @db.Decimal(5, 2)
+  status        Int?      @default(1)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model general_items {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  image      String?   @db.VarChar(255)
+  amount     Decimal?  @default(0) @db.Decimal(10, 2)
+  discount   Decimal?  @default(0) @db.Decimal(5, 2)
+  status     Int?      @default(1)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model lab_test_categories {
+  id            Int         @id @default(autoincrement())
+  category_name String      @db.VarChar(255)
+  image         String?
+  status        Int?        @default(1)
+  created_at    DateTime?   @default(now()) @db.Timestamp(6)
+  lab_tests     lab_tests[]
+}
+
+model lab_test_items {
+  id                                           Int        @id @default(autoincrement())
+  combo_id                                     Int?
+  test_id                                      Int?
+  created_at                                   DateTime?  @default(now()) @db.Timestamp(6)
+  lab_tests_lab_test_items_combo_idTolab_tests lab_tests? @relation("lab_test_items_combo_idTolab_tests", fields: [combo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  lab_tests_lab_test_items_test_idTolab_tests  lab_tests? @relation("lab_test_items_test_idTolab_tests", fields: [test_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model lab_tests {
+  id                                                Int                  @id @default(autoincrement())
+  test_name                                         String?              @db.VarChar(255)
+  amount                                            Decimal?             @default(0) @db.Decimal(10, 2)
+  discount                                          Decimal?             @default(0) @db.Decimal(10, 2)
+  rghs_discount                                     Decimal?             @default(0) @db.Decimal(10, 2)
+  is_rghs                                           Boolean?             @default(false)
+  description                                       String?
+  status                                            Int?                 @default(1)
+  created_at                                        DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at                                        DateTime?            @default(now()) @db.Timestamp(6)
+  image                                             String?              @db.VarChar(255)
+  lab_test_type                                     String?              @default("Singular") @db.VarChar(100)
+  package_name                                      String?              @db.VarChar(255)
+  category_id                                       Int?
+  is_popular                                        Boolean?             @default(false)
+  lab_partner_name                                  String?              @db.VarChar(255)
+  lab_rating                                        Decimal?             @default(0) @db.Decimal(3, 2)
+  lab_accreditation                                 String?              @db.VarChar(255)
+  free_home_collection                              Boolean?             @default(false)
+  report_turnaround_time                            String?              @db.VarChar(100)
+  test_prerequisites                                String[]
+  parameters_count                                  String?              @db.VarChar(100)
+  included_parameters_details                       Json?
+  lab_test_items_lab_test_items_combo_idTolab_tests lab_test_items[]     @relation("lab_test_items_combo_idTolab_tests")
+  lab_test_items_lab_test_items_test_idTolab_tests  lab_test_items[]     @relation("lab_test_items_test_idTolab_tests")
+  lab_test_categories                               lab_test_categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+}
+
+model medicine_order_items {
+  id              Int              @id @default(autoincrement())
+  order_id        Int?
+  medicine_id     Int?
+  quantity        Int?             @default(1)
+  price           Decimal?         @default(0) @db.Decimal(10, 2)
+  discount        Decimal?         @default(0) @db.Decimal(10, 2)
+  item_total      Decimal?         @default(0) @db.Decimal(10, 2)
+  medicines       medicines?       @relation(fields: [medicine_id], references: [id], onUpdate: NoAction)
+  medicine_orders medicine_orders? @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model medicine_orders {
+  id                   Int                    @id @default(autoincrement())
+  customer_id          Int?
+  delivery_boy_id      Int?
+  total_price          Decimal?               @default(0) @db.Decimal(10, 2)
+  sub_total_price      Decimal?               @default(0) @db.Decimal(10, 2)
+  delivery_charge      Decimal?               @default(0) @db.Decimal(10, 2)
+  payment_method       String?                @db.VarChar(50)
+  transaction_id       String?                @db.VarChar(255)
+  address              String?
+  current_status       String?                @default("Pending") @db.VarChar(50)
+  order_flow           String?                @default("Waiting For Decision") @db.VarChar(100)
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamp(6)
+  order_type           String?                @default("Normal") @db.VarChar(20)
+  prescription_images  String[]
+  customer_id_manual   Int?
+  RGHS_Tid             String?                @db.VarChar(255)
+  user_action          String?                @default("pending") @db.VarChar(20)
+  doctor_name          String?                @db.VarChar(255)
+  prescription_date    DateTime?              @db.Date
+  medicine_order_items medicine_order_items[]
+  customers            customers?             @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
+  delivery_boys        delivery_boys?         @relation(fields: [delivery_boy_id], references: [id], onUpdate: NoAction)
+  system_cart          system_cart[]
+}
+
+model medicines {
+  id                    Int                    @id @default(autoincrement())
+  medicine_name         String?                @db.VarChar(255)
+  medicine_image        String?
+  category_id           Int?
+  brand_id              Int?
+  medicine_description  String?
+  price                 Decimal?               @default(0) @db.Decimal(10, 2)
+  stock_status          String?                @default("In Stock") @db.VarChar(50)
+  stock_quantity        Int?                   @default(0)
+  prescription_required Boolean?               @default(false)
+  status                Int?                   @default(1)
+  created_at            DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamp(6)
+  medicine_type         String?                @db.VarChar(100)
+  medicine_discount     Decimal?               @default(0) @db.Decimal(10, 2)
+  rghs_discount         Decimal?               @default(0) @db.Decimal(10, 2)
+  medicine_images       String[]
+  pack_type             String?                @db.VarChar(50)
+  medicine_rghs         Boolean?               @default(false)
+  medicine_order_items  medicine_order_items[]
+  brands                brands?                @relation(fields: [brand_id], references: [id], onUpdate: NoAction)
+  categories            categories?            @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  system_cart           system_cart[]
+}
+
+model order_items {
+  id           Int       @id @default(autoincrement())
+  order_id     Int?
+  item_name    String?   @db.VarChar(255)
+  item_details String?
+  quantity     Int?      @default(1)
+  price        Decimal?  @default(0) @db.Decimal(10, 2)
+  mrp          Decimal?  @default(0) @db.Decimal(10, 2)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  orders       orders?   @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model orders {
+  id               Int           @id @default(autoincrement())
+  user_id          Int?
+  order_name       String?       @db.VarChar(255)
+  order_image      String?
+  delivery_date    DateTime?     @db.Date
+  order_type       String?       @db.VarChar(50)
+  beneficiary_name String?       @db.VarChar(255)
+  delivery_address String?
+  total_items      Int?          @default(0)
+  total_amount     Decimal?      @default(0) @db.Decimal(10, 2)
+  total_mrp        Decimal?      @default(0) @db.Decimal(10, 2)
+  status           String?       @default("pending") @db.VarChar(50)
+  created_at       DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?     @default(now()) @db.Timestamp(6)
+  order_items      order_items[]
+  users            users?        @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+}
+
+model payment_gateways {
+  id            Int       @id @default(autoincrement())
+  gateway_name  String?   @db.VarChar(255)
+  gateway_image String?
+  status        Int?      @default(1)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model system_cart {
+  id              Int              @id @default(autoincrement())
+  order_id        Int?
+  medicine_id     Int?
+  num_strips      Int?             @default(1)
+  pack_type       String?          @db.VarChar(50)
+  quantity        Int?             @default(1)
+  price           Decimal?         @default(0) @db.Decimal(10, 2)
+  discount        Decimal?         @default(0) @db.Decimal(10, 2)
+  item_total      Decimal?         @default(0) @db.Decimal(10, 2)
+  created_at      DateTime?        @default(now()) @db.Timestamp(6)
+  medicines       medicines?       @relation(fields: [medicine_id], references: [id], onUpdate: NoAction)
+  medicine_orders medicine_orders? @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model system_settings {
+  id                Int       @id @default(autoincrement())
+  dashboard_name    String?   @default("SOMACY") @db.VarChar(255)
+  short_name        String?   @default("NK") @db.VarChar(50)
+  currency          String?   @default("₹") @db.VarChar(10)
+  timezone          String?   @default("Asia/Kolkata") @db.VarChar(100)
+  show_prescription String?   @default("Yes") @db.VarChar(10)
+  logo              String?   @db.VarChar(255)
+  user_app_id       String?   @db.VarChar(255)
+  user_app_key      String?   @db.VarChar(255)
+  delivery_app_id   String?   @db.VarChar(255)
+  delivery_app_key  String?   @db.VarChar(255)
+  store_name        String?   @db.VarChar(255)
+  store_mobile      String?   @db.VarChar(20)
+  store_email       String?   @db.VarChar(255)
+  contact_us        String?   @db.VarChar(20)
+  store_address     String?
+  about_us          String?
+  latitude          String?   @db.VarChar(50)
+  longitude         String?   @db.VarChar(50)
+  delivery_radius   String?   @db.VarChar(50)
+  per_km_price      String?   @db.VarChar(50)
+  referral_amount   String?   @db.VarChar(50)
+  sign_up_amount    String?   @db.VarChar(50)
+  privacy_policy    String?
+  terms_conditions  String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model testimonials {
+  id          Int       @id @default(autoincrement())
+  name        String?   @db.VarChar(255)
+  designation String?   @db.VarChar(255)
+  content     String?
+  image       String?
+  status      Int?      @default(1)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model user_cart {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  item_id    Int
+  item_type  String    @db.VarChar(50)
+  item_name  String?   @db.VarChar(255)
+  price      Decimal?  @default(0) @db.Decimal(10, 2)
+  quantity   Int?      @default(1)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id         Int         @id @default(autoincrement())
+  first_name String?     @db.VarChar(255)
+  last_name  String?     @db.VarChar(255)
+  mobile     String      @unique @db.VarChar(20)
+  password   String?     @db.VarChar(255)
+  otp        String?     @db.VarChar(6)
+  address    String?
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at DateTime?   @default(now()) @db.Timestamp(6)
+  orders     orders[]
+  user_cart  user_cart[]
+}
+
+model faqs {
+  id         Int       @id @default(autoincrement())
+  question   String    @db.VarChar(255)
+  answer     String?
+  status     Int?      @default(1)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model blogs {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  description String?
+  content     String?
+  image       String?   @db.VarChar(255)
+  category    String?   @db.VarChar(100)
+  status      Int?      @default(1)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model doctors {
+  id                   Int              @id @default(autoincrement())
+  name                 String           @db.VarChar(255)
+  image                String?          @db.VarChar(255)
+  specialization       String?          @db.VarChar(255)
+  experience_years      Int?             @default(0)
+  consultation_fee     Decimal?         @default(0) @db.Decimal(10, 2)
+  location             String?          @db.VarChar(255)
+  rating               Decimal?         @default(0) @db.Decimal(3, 2)
+  reviews_count        Int?             @default(0)
+  about                String?
+  education            String[]
+  awards               String[]
+  specializations_tags String[]
+  is_rghs_empanelled   Boolean?         @default(false)
+  consultation_modes   Json?            @default("\"[\\\"Video\\\", \\\"Voice\\\", \\\"Chat\\\", \\\"In-Clinic\\\"]\"")
+  status               Int?             @default(1)
+  created_at           DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?        @default(now()) @db.Timestamp(6)
+  appointments         appointments[]
+  doctor_reviews       doctor_reviews[]
+}
+
+model doctor_reviews {
+  id           Int       @id @default(autoincrement())
+  doctor_id    Int?
+  patient_name String?   @db.VarChar(255)
+  rating       Int?      @default(5)
+  comment      String?
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  doctors      doctors?  @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model appointments {
+  id                   Int       @id @default(autoincrement())
+  doctor_id            Int?
+  user_id              Int?
+  patient_name         String?   @db.VarChar(255)
+  patient_id           String?   @db.VarChar(100)
+  consultation_mode    String?   @db.VarChar(50)
+  appointment_date     DateTime  @db.Date
+  appointment_time     DateTime  @db.Time(6)
+  fee                  Decimal?  @default(0) @db.Decimal(10, 2)
+  total_payable        Decimal?  @default(0) @db.Decimal(10, 2)
+  status               String?   @default("scheduled") @db.VarChar(50)
+  rghs_benefit_applied Boolean?  @default(false)
+  created_at           DateTime? @default(now()) @db.Timestamp(6)
+  updated_at           DateTime? @default(now()) @db.Timestamp(6)
+  doctors              doctors?  @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}

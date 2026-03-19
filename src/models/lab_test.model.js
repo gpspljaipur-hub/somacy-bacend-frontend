@@ -19,9 +19,18 @@ const addLabTest = async (data) => {
         description,
         image,
         lab_test_type,
-        status
+        status,
+        is_popular,
+        lab_partner_name,
+        lab_rating,
+        lab_accreditation,
+        free_home_collection,
+        report_turnaround_time,
+        test_prerequisites,
+        parameters_count,
+        included_parameters_details
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       RETURNING *;
     `;
 
@@ -37,6 +46,15 @@ const addLabTest = async (data) => {
       data.image || null,
       data.lab_test_type || "Singular",
       data.status !== undefined ? data.status : 1,
+      data.is_popular !== undefined ? data.is_popular : false,
+      data.lab_partner_name || null,
+      data.lab_rating || 0,
+      data.lab_accreditation || null,
+      data.free_home_collection !== undefined ? data.free_home_collection : false,
+      data.report_turnaround_time || null,
+      data.test_prerequisites || [],
+      data.parameters_count || null,
+      data.included_parameters_details ? JSON.stringify(data.included_parameters_details) : null
     ];
 
     const result = await client.query(query, values);
@@ -116,6 +134,7 @@ const getAllLabTests = async (
   offset = 0,
   search = "",
   type = null,
+  categoryId = null
 ) => {
   let query = `
   SELECT 
@@ -157,6 +176,11 @@ const getAllLabTests = async (
     params.push(type);
   }
 
+  if (categoryId) {
+    conditions.push(`lt.category_id = $${conditions.length + 1}`);
+    params.push(categoryId);
+  }
+
   if (conditions.length > 0) {
     query += " WHERE " + conditions.join(" AND ");
   }
@@ -171,7 +195,7 @@ const getAllLabTests = async (
 };
 
 // COUNT LAB TESTS
-const countLabTests = async (search = "", type = null) => {
+const countLabTests = async (search = "", type = null, categoryId = null) => {
   let query = "SELECT COUNT(*) FROM lab_tests";
   const params = [];
   const conditions = [];
@@ -186,6 +210,11 @@ const countLabTests = async (search = "", type = null) => {
   if (type) {
     conditions.push(`lab_test_type = $${conditions.length + 1}`);
     params.push(type);
+  }
+
+  if (categoryId) {
+    conditions.push(`category_id = $${conditions.length + 1}`);
+    params.push(categoryId);
   }
 
   if (conditions.length > 0) {
@@ -262,8 +291,17 @@ const updateLabTest = async (id, data) => {
                 image = $8,
                 lab_test_type = $9,
                 status = $10,
+                is_popular = $11,
+                lab_partner_name = $12,
+                lab_rating = $13,
+                lab_accreditation = $14,
+                free_home_collection = $15,
+                report_turnaround_time = $16,
+                test_prerequisites = $17,
+                parameters_count = $18,
+                included_parameters_details = $19,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $11
+            WHERE id = $20
             RETURNING *;
         `;
 
@@ -278,6 +316,15 @@ const updateLabTest = async (id, data) => {
       data.image,
       data.lab_test_type,
       data.status,
+      data.is_popular,
+      data.lab_partner_name,
+      data.lab_rating,
+      data.lab_accreditation,
+      data.free_home_collection,
+      data.report_turnaround_time,
+      data.test_prerequisites,
+      data.parameters_count,
+      data.included_parameters_details ? JSON.stringify(data.included_parameters_details) : null,
       id,
     ];
 

@@ -22,17 +22,17 @@ const addPaymentGateway = async (req, res) => {
             status: status !== undefined && !isNaN(status) ? Number(status) : 1,
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Payment Gateway added successfully",
             data: gateway,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -47,18 +47,18 @@ const getPaymentGateways = async (req, res) => {
         const data = await paymentGatewayModel.getAllPaymentGateways(limit, offset, search);
         const total = await paymentGatewayModel.countPaymentGateways(search);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Payment Gateways fetched successfully",
             total_count: total,
             data: data,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -68,20 +68,20 @@ const updatePaymentGateway = async (req, res) => {
         const { id, gateway_name, status } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Payment Gateway ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingGateway = await paymentGatewayModel.getPaymentGatewayById(id);
         if (!existingGateway) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Payment Gateway not found",
                 data: null
-            }]);
+            });
         }
 
         let gateway_image = existingGateway.gateway_image;
@@ -98,17 +98,17 @@ const updatePaymentGateway = async (req, res) => {
             status: (status !== undefined && status !== "") ? Number(status) : existingGateway.status,
         });
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Payment Gateway updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -118,25 +118,25 @@ const deletePaymentGateway = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Payment Gateway ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await paymentGatewayModel.deletePaymentGateway(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Payment Gateway(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

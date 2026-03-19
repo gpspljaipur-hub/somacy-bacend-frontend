@@ -35,17 +35,17 @@ const addCoupon = async (req, res) => {
             coupon_image,
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Coupon added successfully",
             data: coupon,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -59,18 +59,18 @@ const getCoupons = async (req, res) => {
 
         const data = await couponModel.getAllCoupons(limit, offset, search);
         const total = await couponModel.countCoupons(search);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Coupons fetched successfully",
             total_count: total,
             data: data
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -89,20 +89,20 @@ const updateCoupon = async (req, res) => {
         } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Coupon ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingCoupon = await couponModel.getCouponById(id);
         if (!existingCoupon) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Coupon not found",
                 data: null
-            }]);
+            });
         }
 
         let coupon_image = existingCoupon.coupon_image;
@@ -124,17 +124,17 @@ const updateCoupon = async (req, res) => {
             coupon_image,
         });
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Coupon updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -144,25 +144,25 @@ const deleteCoupon = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Coupon ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await couponModel.deleteCoupon(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Coupon(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

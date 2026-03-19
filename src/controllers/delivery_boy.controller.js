@@ -21,17 +21,17 @@ const addDeliveryBoy = async (req, res) => {
             status: status !== undefined && !isNaN(status) ? Number(status) : 1,
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Delivery boy added successfully",
             data: deliveryBoy,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -45,18 +45,18 @@ const getDeliveryBoys = async (req, res) => {
 
         const data = await deliveryBoyModel.getAllDeliveryBoys(limit, offset, search);
         const total = await deliveryBoyModel.countDeliveryBoys(search);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Delivery boys fetched successfully",
             total_count: total,
             data: data
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -66,20 +66,20 @@ const updateDeliveryBoy = async (req, res) => {
         const { id, name, mobile, email, commission_percentage, address, status } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Delivery Boy ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingDeliveryBoy = await deliveryBoyModel.getDeliveryBoyById(id);
         if (!existingDeliveryBoy) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Delivery boy not found",
                 data: null
-            }]);
+            });
         }
 
         const updated = await deliveryBoyModel.updateDeliveryBoy(id, {
@@ -91,17 +91,17 @@ const updateDeliveryBoy = async (req, res) => {
             status: status !== undefined ? Number(status) : existingDeliveryBoy.status,
         });
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Delivery boy updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -111,25 +111,25 @@ const deleteDeliveryBoy = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Delivery Boy ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await deliveryBoyModel.deleteDeliveryBoy(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Delivery boy(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 

@@ -22,17 +22,17 @@ const addCategory = async (req, res) => {
             status: status !== undefined && !isNaN(status) ? Number(status) : 1,
         });
 
-        res.status(201).json([{
-            status: 201,
+        res.status(201).json({
+            status: 1,
             message: "Category added successfully",
             data: category,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -47,18 +47,18 @@ const getCategories = async (req, res) => {
         const data = await categoryModel.getAllCategories(limit, offset, search);
         const total = await categoryModel.countCategories(search);
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Categories fetched successfully",
             total_count: total,
             data: data,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -68,20 +68,20 @@ const updateCategory = async (req, res) => {
         const { id, category_name, status } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Category ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         const existingCategory = await categoryModel.getCategoryById(id);
         if (!existingCategory) {
-            return res.status(404).json([{
-                status: 404,
+            return res.status(404).json({
+                status: 0,
                 message: "Category not found",
                 data: null
-            }]);
+            });
         }
 
         let category_image = existingCategory.category_image;
@@ -98,17 +98,17 @@ const updateCategory = async (req, res) => {
             status: (status !== undefined && status !== "") ? Number(status) : existingCategory.status,
         });
 
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Category updated successfully",
             data: updated,
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
@@ -118,25 +118,25 @@ const deleteCategory = async (req, res) => {
         const { id } = req.body;
 
         if (!id) {
-            return res.status(400).json([{
-                status: 400,
+            return res.status(400).json({
+                status: 0,
                 message: "Category ID is required in body",
                 data: null
-            }]);
+            });
         }
 
         await categoryModel.deleteCategory(id);
-        res.json([{
-            status: 200,
+        res.json({
+            status: 1,
             message: "Category(s) deleted successfully",
             data: null
-        }]);
+        });
     } catch (err) {
-        res.status(500).json([{
-            status: 500,
+        res.status(500).json({
+            status: 0,
             message: err.message,
             data: null
-        }]);
+        });
     }
 };
 
