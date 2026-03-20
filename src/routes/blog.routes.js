@@ -9,5 +9,6 @@ router.post("/list", upload.none(), controller.getBlogsList);
 router.post("/details", upload.none(), controller.getBlogDetails);
 router.put("/update", upload.single("image"), controller.updateBlog);
 router.delete("/delete", upload.none(), controller.deleteBlog);
+router.post("/upload-editor-image", upload.single("image"), controller.uploadEditorImage);
 
 module.exports = router;

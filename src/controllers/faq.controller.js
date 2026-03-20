@@ -12,7 +12,7 @@ const addFaq = async (req, res) => {
     const faq = await faqModel.addFaq({
       question,
       answer,
-      status: status !== undefined ? Number(status) : 1,
+      status: status !== undefined ? Number(status) : 2,
     });
 
     res.status(201).json({

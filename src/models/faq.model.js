@@ -6,7 +6,7 @@ const addFaq = async (data) => {
     data: {
       question: data.question,
       answer: data.answer || null,
-      status: data.status !== undefined ? parseInt(data.status) : 1,
+      status: data.status !== undefined ? parseInt(data.status) : 2,
     }
   });
 };

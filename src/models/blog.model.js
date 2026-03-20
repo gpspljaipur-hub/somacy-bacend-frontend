@@ -9,7 +9,7 @@ const addBlog = async ({ title, description, content, image, category, status })
             content: content || null,
             image: image || null,
             category: category || 'All',
-            status: status !== undefined ? parseInt(status) : 1
+            status: status !== undefined ? parseInt(status) : 2
         }
     });
 };

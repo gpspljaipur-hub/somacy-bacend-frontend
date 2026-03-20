@@ -12,7 +12,7 @@ const addBlog = async (req, res) => {
             content,
             image,
             category: category || "All",
-            status: status !== undefined ? Number(status) : 1
+            status: status !== undefined ? Number(status) : 2
         });
 
         res.status(201).json({
@@ -121,10 +121,30 @@ const deleteBlog = async (req, res) => {
     }
 };
 
+// UPLOAD EDITOR IMAGE
+const uploadEditorImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ status: 0, message: "No image uploaded" });
+        }
+        
+        const imageUrl = `/uploads/blogs/${req.file.filename}`;
+        
+        res.status(200).json({
+            status: 1,
+            message: "Editor image uploaded successfully",
+            url: imageUrl
+        });
+    } catch (err) {
+        res.status(500).json({ status: 0, message: err.message });
+    }
+}
+
 module.exports = {
     addBlog,
     getBlogsList,
     getBlogDetails,
     updateBlog,
-    deleteBlog
+    deleteBlog,
+    uploadEditorImage
 };
