@@ -57,9 +57,9 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
     where,
     include: {
       lab_test_categories: true,
-      lab_test_items_lab_test_items_combo_idTolab_tests: {
+      included_test_items: {
         include: {
-          lab_tests_lab_test_items_test_idTolab_tests: true
+          test: true
         }
       }
     },
@@ -68,14 +68,18 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
     skip: parseInt(offset)
   });
 
-  return tests.map(lt => ({
-    ...lt,
-    category_name: lt.lab_test_categories ? lt.lab_test_categories.category_name : null,
-    included_tests: lt.lab_test_items_lab_test_items_combo_idTolab_tests.map(item => ({
-      id: item.lab_tests_lab_test_items_test_idTolab_tests.id,
-      test_name: item.lab_tests_lab_test_items_test_idTolab_tests.test_name
-    }))
-  }));
+  return tests.map(lt => {
+    const { included_test_items, lab_test_categories, ...cleanLt } = lt;
+    return {
+      ...cleanLt,
+      category_name: lab_test_categories ? lab_test_categories.category_name : null,
+      lab_test_categories: lab_test_categories,
+      included_tests: included_test_items.map(item => ({
+        id: item.test.id,
+        test_name: item.test.test_name
+      }))
+    };
+  });
 };
 
 // COUNT LAB TESTS
@@ -99,9 +103,9 @@ const getLabTestById = async (id) => {
     where: { id: parseInt(id) },
     include: {
       lab_test_categories: true,
-      lab_test_items_lab_test_items_combo_idTolab_tests: {
+      included_test_items: {
         include: {
-          lab_tests_lab_test_items_test_idTolab_tests: true
+          test: true
         }
       }
     }
@@ -109,12 +113,14 @@ const getLabTestById = async (id) => {
 
   if (!lt) return null;
 
+  const { included_test_items, lab_test_categories, ...cleanLt } = lt;
   return {
-    ...lt,
-    category_name: lt.lab_test_categories ? lt.lab_test_categories.category_name : null,
-    included_tests: lt.lab_test_items_lab_test_items_combo_idTolab_tests.map(item => ({
-      id: item.lab_tests_lab_test_items_test_idTolab_tests.id,
-      test_name: item.lab_tests_lab_test_items_test_idTolab_tests.test_name
+    ...cleanLt,
+    category_name: lab_test_categories ? lab_test_categories.category_name : null,
+    lab_test_categories: lab_test_categories,
+    included_tests: included_test_items.map(item => ({
+      id: item.test.id,
+      test_name: item.test.test_name
     }))
   };
 };
@@ -178,9 +184,9 @@ const deleteLabTest = async (id) => {
 const getExportData = async () => {
   const tests = await prisma.lab_tests.findMany({
     include: {
-      lab_test_items_lab_test_items_combo_idTolab_tests: {
+      included_test_items: {
         include: {
-          lab_tests_lab_test_items_test_idTolab_tests: true
+          test: true
         }
       }
     },
@@ -200,7 +206,7 @@ const getExportData = async () => {
     lab_test_type: lt.lab_test_type,
     status: lt.status,
     created_at: lt.created_at,
-    included_tests: lt.lab_test_items_lab_test_items_combo_idTolab_tests.map(item => item.lab_tests_lab_test_items_test_idTolab_tests.test_name).join(', ')
+    included_tests: lt.included_test_items.map(item => item.test.test_name).join(', ')
   }));
 };
 
