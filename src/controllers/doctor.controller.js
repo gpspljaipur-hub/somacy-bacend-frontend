@@ -1,4 +1,5 @@
 const doctorModel = require("../models/doctor.model");
+const { safeParseArray } = require("../utils/safeParser");
 
 // ADD DOCTOR (Admin only usually)
 const addDoctor = async (req, res) => {
@@ -11,14 +12,14 @@ const addDoctor = async (req, res) => {
             image,
             specialization,
             experience_years: experience_years ? Number(experience_years) : 0,
-            consultation_fee: consultation_fee ? Number(consultation_fee) : 0,
+            consultation_fee: consultation_fee ? Number(consultation_fee) : 100, // Default to 100 for doctors
             location,
             about,
-            education: req.body.education ? JSON.parse(req.body.education) : [],
-            awards: req.body.awards ? JSON.parse(req.body.awards) : [],
-            specializations_tags: req.body.specializations_tags ? JSON.parse(req.body.specializations_tags) : [],
+            education: safeParseArray(req.body.education),
+            awards: safeParseArray(req.body.awards),
+            specializations_tags: safeParseArray(req.body.specializations_tags),
             is_rghs_empanelled: req.body.is_rghs_empanelled === 'true' || req.body.is_rghs_empanelled === true,
-            consultation_modes: req.body.consultation_modes ? JSON.parse(req.body.consultation_modes) : ["Video", "Voice", "Chat", "In-Clinic"],
+            consultation_modes: safeParseArray(req.body.consultation_modes, ["Video", "Voice", "Chat", "In-Clinic"]),
             status: status !== undefined ? Number(status) : 1
         });
 
@@ -104,11 +105,11 @@ const updateDoctor = async (req, res) => {
             consultation_fee: consultation_fee !== undefined ? Number(consultation_fee) : existing.consultation_fee,
             location: location !== undefined ? location : existing.location,
             about: about !== undefined ? about : existing.about,
-            education: req.body.education ? JSON.parse(req.body.education) : existing.education,
-            awards: req.body.awards ? JSON.parse(req.body.awards) : existing.awards,
-            specializations_tags: req.body.specializations_tags ? JSON.parse(req.body.specializations_tags) : existing.specializations_tags,
+            education: req.body.education !== undefined ? safeParseArray(req.body.education) : existing.education,
+            awards: req.body.awards !== undefined ? safeParseArray(req.body.awards) : existing.awards,
+            specializations_tags: req.body.specializations_tags !== undefined ? safeParseArray(req.body.specializations_tags) : existing.specializations_tags,
             is_rghs_empanelled: req.body.is_rghs_empanelled !== undefined ? (req.body.is_rghs_empanelled === 'true' || req.body.is_rghs_empanelled === true) : existing.is_rghs_empanelled,
-            consultation_modes: req.body.consultation_modes ? JSON.parse(req.body.consultation_modes) : existing.consultation_modes,
+            consultation_modes: req.body.consultation_modes !== undefined ? safeParseArray(req.body.consultation_modes) : existing.consultation_modes,
             status: status !== undefined ? Number(status) : existing.status
         });
 

@@ -1,28 +1,21 @@
 const cartModel = require("../models/cart.model");
 const medicineModel = require("../models/medicine.model");
 const prisma = require("../config/prisma");
+const { safeParseArray } = require("../utils/safeParser");
 const xlsx = require("xlsx");
 
 // SET CART ITEM (Supports Multiple & Auto-Sync)
 const setCart = async (req, res) => {
     try {
         const { order_id } = req.body;
-        let incomingItems = req.body.items;
+        // Use safe parser for incoming items
+        let incomingItems = safeParseArray(req.body.items, null);
 
         if (!order_id) {
             return res.status(400).json({ status: 0, message: "Order ID is required." });
         }
 
-        // Support both single item and bulk array
-        if (typeof incomingItems === 'string') {
-            try {
-                incomingItems = JSON.parse(incomingItems);
-            } catch (e) {
-                // Not a JSON string, fallback to single item logic
-            }
-        }
-
-        if (!Array.isArray(incomingItems)) {
+        if (!incomingItems || !Array.isArray(incomingItems)) {
             if (req.body.medicine_id) {
                 incomingItems = [{
                     medicine_id: req.body.medicine_id,
@@ -125,18 +118,6 @@ const setCart = async (req, res) => {
             }
 
             // 4. Update order totals
-            const nonRghsItemsAggr = await tx.system_cart.findMany({
-                where: {
-                    order_id: parseInt(order_id),
-                    NOT: (orderType === 'RGHS') ? {
-                        medicines: { medicine_rghs: true }
-                    } : undefined
-                }
-            });
-
-            // Note: Since Prisma filtering on relations in findMany can be complex, 
-            // we'll fetch and filter if needed, OR use aggregate if it was simpler.
-            // But let's calculate here for accuracy.
             let subTotal = 0;
             const allItems = await tx.system_cart.findMany({
                 where: { order_id: parseInt(order_id) },
@@ -220,19 +201,13 @@ const deleteItem = async (req, res) => {
 const updateCart = async (req, res) => {
     try {
         const { order_id } = req.body;
-        let incomingItems = req.body.items;
+        let incomingItems = safeParseArray(req.body.items, null);
 
         if (!order_id) {
             return res.status(400).json({ status: 0, message: "Order ID is required." });
         }
 
-        if (typeof incomingItems === 'string') {
-            try {
-                incomingItems = JSON.parse(incomingItems);
-            } catch (e) { }
-        }
-
-        if (!Array.isArray(incomingItems)) {
+        if (!incomingItems || !Array.isArray(incomingItems)) {
             if (req.body.medicine_id) {
                 incomingItems = [{
                     medicine_id: req.body.medicine_id,

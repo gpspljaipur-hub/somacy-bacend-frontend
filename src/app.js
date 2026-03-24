@@ -21,6 +21,8 @@ const UPLOAD_DIRS = [
   "src/uploads/prescriptions",
   "src/uploads/testimonials",
   "src/uploads/orders",
+  "src/uploads/lab_partners",
+  "src/uploads/tutorials",
 ];
 
 UPLOAD_DIRS.forEach((dir) => {
@@ -83,13 +85,20 @@ app.use("/api/lab-tests", require("./routes/lab_test.routes"));
 app.use("/api/devices", require("./routes/device.routes"));
 app.use("/api/general_items", require("./routes/general_item.routes"));
 app.use("/api/export", require("./routes/export.routes"));
+app.use("/api/lab-partner", require("./routes/lab_partner.routes"));
 app.use("/api/users", userRoutes);
+app.use("/api/user-address", require("./routes/user_address.routes"));
 app.use("/api/lab-test-categories", labTestCategoryRoutes);
+app.use("/api/lab-test-schedule", require("./routes/lab_test_schedule.routes"));
+app.use("/api/lab-test-booking", require("./routes/lab_test_booking.routes"));
 app.use("/api/user-cart", cartRoutes);
 app.use("/api/user-order", userOrderDetails);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/blogs", require("./routes/blog.routes"));
 app.use("/api/doctors", require("./routes/doctor.routes"));
+app.use("/api/doctor-schedule", require("./routes/doctor_schedule.routes"));
 app.use("/api/appointments", require("./routes/appointment.routes"));
 app.use("/api/reviews", require("./routes/review.routes"));
+app.use("/api/contact", require("./routes/contact.routes"));
+app.use("/api/video-tutorials", require("./routes/video_tutorial.routes"));
 module.exports = app;

@@ -17,6 +17,8 @@ const addLabTest = async (data) => {
         lab_test_type: data.lab_test_type || "Singular",
         status: data.status !== undefined ? parseInt(data.status) : 1,
         is_popular: data.is_popular !== undefined ? !!data.is_popular : false,
+        lab_partner_id: data.lab_partner_id ? parseInt(data.lab_partner_id) : null,
+        // Legacy fields (optional to keep for migration)
         lab_partner_name: data.lab_partner_name || null,
         lab_rating: data.lab_rating ? parseFloat(data.lab_rating) : 0,
         lab_accreditation: data.lab_accreditation || null,
@@ -57,6 +59,7 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
     where,
     include: {
       lab_test_categories: true,
+      lab_partners: true,
       included_test_items: {
         include: {
           test: true
@@ -69,11 +72,16 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
   });
 
   return tests.map(lt => {
-    const { included_test_items, lab_test_categories, ...cleanLt } = lt;
+    const { included_test_items, lab_test_categories, lab_partners, ...cleanLt } = lt;
     return {
       ...cleanLt,
       category_name: lab_test_categories ? lab_test_categories.category_name : null,
       lab_test_categories: lab_test_categories,
+      lab_partner_details: lab_partners, // Provide related data
+      // For backwards compatibility, if lab_partner_id is used, override manual fields
+      lab_partner_name: lab_partners ? lab_partners.name : cleanLt.lab_partner_name,
+      lab_rating: lab_partners ? lab_partners.rating : cleanLt.lab_rating,
+      lab_accreditation: lab_partners ? lab_partners.accreditation : cleanLt.lab_accreditation,
       included_tests: included_test_items.map(item => ({
         id: item.test.id,
         test_name: item.test.test_name
@@ -82,27 +90,13 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
   });
 };
 
-// COUNT LAB TESTS
-const countLabTests = async (search = "", type = null, categoryId = null) => {
-  let where = {};
-  if (search) {
-    where.OR = [
-      { test_name: { contains: search, mode: 'insensitive' } },
-      { package_name: { contains: search, mode: 'insensitive' } }
-    ];
-  }
-  if (type) where.lab_test_type = type;
-  if (categoryId) where.category_id = parseInt(categoryId);
-
-  return await prisma.lab_tests.count({ where });
-};
-
 // GET LAB TEST BY ID
 const getLabTestById = async (id) => {
   const lt = await prisma.lab_tests.findUnique({
     where: { id: parseInt(id) },
     include: {
       lab_test_categories: true,
+      lab_partners: true,
       included_test_items: {
         include: {
           test: true
@@ -113,11 +107,15 @@ const getLabTestById = async (id) => {
 
   if (!lt) return null;
 
-  const { included_test_items, lab_test_categories, ...cleanLt } = lt;
+  const { included_test_items, lab_test_categories, lab_partners, ...cleanLt } = lt;
   return {
     ...cleanLt,
     category_name: lab_test_categories ? lab_test_categories.category_name : null,
     lab_test_categories: lab_test_categories,
+    lab_partner_details: lab_partners,
+    lab_partner_name: lab_partners ? lab_partners.name : cleanLt.lab_partner_name,
+    lab_rating: lab_partners ? lab_partners.rating : cleanLt.lab_rating,
+    lab_accreditation: lab_partners ? lab_partners.accreditation : cleanLt.lab_accreditation,
     included_tests: included_test_items.map(item => ({
       id: item.test.id,
       test_name: item.test.test_name
@@ -142,6 +140,7 @@ const updateLabTest = async (id, data) => {
         lab_test_type: data.lab_test_type,
         status: data.status !== undefined ? parseInt(data.status) : undefined,
         is_popular: data.is_popular !== undefined ? !!data.is_popular : undefined,
+        lab_partner_id: data.lab_partner_id ? parseInt(data.lab_partner_id) : undefined,
         lab_partner_name: data.lab_partner_name,
         lab_rating: data.lab_rating ? parseFloat(data.lab_rating) : undefined,
         lab_accreditation: data.lab_accreditation,
@@ -164,50 +163,30 @@ const updateLabTest = async (id, data) => {
           }))
         });
       }
-    } else if (data.lab_test_type === "Singular") {
-      await tx.lab_test_items.deleteMany({ where: { combo_id: parseInt(id) } });
     }
 
     return await getLabTestById(id);
   });
 };
 
-// DELETE LAB TEST
+const countLabTests = async (search = "", type = null, categoryId = null) => {
+  let where = {};
+  if (search) {
+    where.OR = [
+      { test_name: { contains: search, mode: 'insensitive' } },
+      { package_name: { contains: search, mode: 'insensitive' } }
+    ];
+  }
+  if (type) where.lab_test_type = type;
+  if (categoryId) where.category_id = parseInt(categoryId);
+  return await prisma.lab_tests.count({ where });
+};
+
 const deleteLabTest = async (id) => {
   const ids = Array.isArray(id) ? id.map(i => parseInt(i)) : [parseInt(id)];
   await prisma.lab_tests.deleteMany({
     where: { id: { in: ids } }
   });
-};
-
-// GET ALL LAB TESTS FOR EXPORT
-const getExportData = async () => {
-  const tests = await prisma.lab_tests.findMany({
-    include: {
-      included_test_items: {
-        include: {
-          test: true
-        }
-      }
-    },
-    orderBy: { id: 'desc' }
-  });
-
-  return tests.map(lt => ({
-    id: lt.id,
-    test_name: lt.test_name,
-    package_name: lt.package_name,
-    amount: lt.amount,
-    discount: lt.discount,
-    rghs_discount: lt.rghs_discount,
-    is_rghs: lt.is_rghs ? 'Yes' : 'No',
-    description: lt.description,
-    image: lt.image,
-    lab_test_type: lt.lab_test_type,
-    status: lt.status,
-    created_at: lt.created_at,
-    included_tests: lt.included_test_items.map(item => item.test.test_name).join(', ')
-  }));
 };
 
 module.exports = {
@@ -217,5 +196,4 @@ module.exports = {
   getLabTestById,
   updateLabTest,
   deleteLabTest,
-  getExportData,
 };

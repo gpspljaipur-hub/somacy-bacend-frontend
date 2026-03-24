@@ -18,7 +18,15 @@ const addMedicine = async (data) => {
             prescription_required: data.prescription_required !== undefined ? !!data.prescription_required : false,
             status: data.status !== undefined ? parseInt(data.status) : 1,
             pack_type: data.pack_type || null,
-            medicine_rghs: data.medicine_rghs !== undefined ? !!data.medicine_rghs : false
+            medicine_rghs: data.medicine_rghs !== undefined ? !!data.medicine_rghs : false,
+            // Extra details
+            salt_composition: data.salt_composition || null,
+            manufacturer: data.manufacturer || null,
+            packaging: data.packaging || null,
+            what_it_is_used_for: data.what_it_is_used_for || null,
+            how_it_works: data.how_it_works || null,
+            safety_advice: data.safety_advice || null,
+            expert_advice: data.expert_advice || []
         }
     });
 };
@@ -43,7 +51,6 @@ const getAllMedicines = async (limit = 20, offset = 0, search = '') => {
         skip: parseInt(offset)
     });
 
-    // Flatten for compatibility with current frontend (returning category_name instead of categories object)
     return medicines.map(m => ({
         ...m,
         category_name: m.categories ? m.categories.category_name : null,
@@ -75,10 +82,36 @@ const getMedicineById = async (id) => {
 
     if (!m) return null;
 
+    // Fetch alternatives based on same salt composition
+    let alternatives = [];
+    if (m.salt_composition) {
+        alternatives = await prisma.medicines.findMany({
+            where: {
+                salt_composition: {
+                  contains: m.salt_composition, // case insensitive partial match if needed or keep it exact
+                  mode: 'insensitive'
+                },
+                NOT: { id: m.id },
+                status: 1
+            },
+            take: 10,
+            include: {
+                categories: true,
+                brands: true
+            }
+        });
+        alternatives = alternatives.map(alt => ({
+            ...alt,
+            category_name: alt.categories ? alt.categories.category_name : null,
+            brand_name: alt.brands ? alt.brands.brand_name : null
+        }));
+    }
+
     return {
         ...m,
         category_name: m.categories ? m.categories.category_name : null,
-        brand_name: m.brands ? m.brands.brand_name : null
+        brand_name: m.brands ? m.brands.brand_name : null,
+        generic_alternatives: alternatives
     };
 };
 
@@ -102,6 +135,14 @@ const updateMedicine = async (id, data) => {
             status: data.status !== undefined ? parseInt(data.status) : undefined,
             pack_type: data.pack_type,
             medicine_rghs: data.medicine_rghs !== undefined ? !!data.medicine_rghs : undefined,
+            // Extra details
+            salt_composition: data.salt_composition,
+            manufacturer: data.manufacturer,
+            packaging: data.packaging,
+            what_it_is_used_for: data.what_it_is_used_for,
+            how_it_works: data.how_it_works,
+            safety_advice: data.safety_advice,
+            expert_advice: data.expert_advice,
             updated_at: new Date()
         }
     });
@@ -130,6 +171,9 @@ const getExportData = async () => {
     return medicines.map(m => ({
         id: m.id,
         medicine_name: m.medicine_name,
+        salt_composition: m.salt_composition,
+        manufacturer: m.manufacturer,
+        packaging: m.packaging,
         medicine_images: Array.isArray(m.medicine_images) ? m.medicine_images.join(', ') : '',
         category_name: m.categories ? m.categories.category_name : null,
         brand_name: m.brands ? m.brands.brand_name : null,

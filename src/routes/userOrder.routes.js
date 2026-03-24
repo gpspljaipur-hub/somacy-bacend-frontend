@@ -25,5 +25,7 @@ router.post(
   upload.none(), // this parses form-data
   orderController.getOrderDetails,
 );
+router.post("/track-order", upload.none(), orderController.trackOrder); 
+router.post("/update-status", upload.none(), orderController.updateStatus); 
 
 module.exports = router;

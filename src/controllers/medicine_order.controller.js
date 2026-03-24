@@ -1,6 +1,7 @@
 const orderModel = require("../models/medicine_order.model");
 const medicineModel = require("../models/medicine.model");
 const customerModel = require("../models/customer.model");
+const { safeParseArray } = require("../utils/safeParser");
 const xlsx = require("xlsx");
 
 // ADD ORDER (Unified: Normal & Prescription)
@@ -18,14 +19,8 @@ const addOrder = async (req, res) => {
           prescription_date,
         } = req.body;
 
-        // Parse items if they come as a JSON string (common in form-data)
-        if (typeof items === 'string') {
-            try {
-                items = JSON.parse(items);
-            } catch (e) {
-                items = [];
-            }
-        }
+        // Use safe parser for items
+        items = safeParseArray(items);
 
         // prescription photos from multer
         const prescription_images = req.files ? req.files.map(file => `uploads/prescriptions/${file.filename}`) : [];
@@ -65,24 +60,17 @@ const addOrder = async (req, res) => {
 
 
         // Logic: Total calculation happens in the model's addOrder method using DB prices.
-        // We just need to pass the basic item info.
         const order = await orderModel.addOrder(orderData, items);
 
-        // Fetch the full order back to calculate totals for response if needed
+        // Fetch the full order back to calculate totals for response
         const fullOrder = await orderModel.getOrderById(order.id);
 
-        // Final calculation of sub_total and total_price on the server
         let sub_total = 0;
         fullOrder.items.forEach(item => {
             sub_total += parseFloat(item.item_total);
         });
 
         const total_price = sub_total + parseFloat(orderData.delivery_charge);
-
-        // Update the order with final calculated totals
-        // Logic: In a real app, we'd do this inside the transaction in model.
-        // For simplicity, let's assume model handles it or we update it.
-        // Update: My updated model handles item totals, but lets ensure order totals are set.
 
         res.status(201).json({
             status: 1,
@@ -192,7 +180,7 @@ const updatePaymentStatus = async (req, res) => {
             return res.status(400).json({ status: 0, message: "Order ID is required in body" });
         }
 
-        const updated = await orderModel.updatePaymentStatus(id, status === true || status === "true");
+        const updated = await orderModel.updatePaymentStatus(id, status === true || status === "true" || status === 1);
 
         if (!updated) {
             return res.status(404).json({ status: 0, message: "Order not found" });
@@ -216,4 +204,3 @@ module.exports = {
     deleteOrder,
     updatePaymentStatus
 };
-

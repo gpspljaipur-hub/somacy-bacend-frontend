@@ -159,6 +159,7 @@ model lab_tests {
   category_id                 Int?
   is_popular                  Boolean?             @default(false)
   lab_partner_name            String?              @db.VarChar(255)
+  lab_partner_id_old          Int?                 // Kept for manual check but we'll use lab_partners model
   lab_rating                  Decimal?             @default(0) @db.Decimal(3, 2)
   lab_accreditation           String?              @db.VarChar(255)
   free_home_collection        Boolean?             @default(false)
@@ -169,6 +170,52 @@ model lab_tests {
   included_test_items         lab_test_items[]     @relation("combo_to_items")
   appears_in_combos           lab_test_items[]     @relation("test_to_items")
   lab_test_categories         lab_test_categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  lab_test_appointments       lab_test_appointments[]
+  lab_test_schedules          lab_test_schedules[]
+  lab_partner_id              Int?
+  lab_partners                lab_partners?        @relation(fields: [lab_partner_id], references: [id], onUpdate: NoAction)
+}
+
+model lab_partners {
+  id                Int         @id @default(autoincrement())
+  name              String      @db.VarChar(255)
+  logo              String?
+  rating            Decimal?    @default(0) @db.Decimal(3, 2)
+  accreditation     String?     @db.VarChar(255)
+  description       String?
+  status            Int?        @default(1)
+  created_at        DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?   @default(now()) @db.Timestamp(6)
+  lab_tests         lab_tests[]
+}
+
+model lab_test_appointments {
+  id                   Int       @id @default(autoincrement())
+  lab_test_id          Int?
+  user_id              Int?
+  patient_name         String?   @db.VarChar(255)
+  mobile               String?   @db.VarChar(20)
+  appointment_date     DateTime  @db.Date
+  appointment_time     DateTime  @db.Time(6)
+  home_collection      Boolean   @default(false)
+  address              String?
+  status               String?   @default("pending") @db.VarChar(50)
+  total_amount         Decimal?  @default(0) @db.Decimal(10, 2)
+  created_at           DateTime? @default(now()) @db.Timestamp(6)
+  updated_at           DateTime? @default(now()) @db.Timestamp(6)
+  lab_tests            lab_tests? @relation(fields: [lab_test_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model lab_test_schedules {
+  id               Int       @id @default(autoincrement())
+  lab_test_id      Int
+  day_of_week      String?   @db.VarChar(20)
+  start_time       String?   @db.VarChar(20)
+  end_time         String?   @db.VarChar(20)
+  status           Int?      @default(1)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+  lab_tests        lab_tests? @relation(fields: [lab_test_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model medicine_order_items {
@@ -230,6 +277,13 @@ model medicines {
   medicine_images       String[]
   pack_type             String?                @db.VarChar(50)
   medicine_rghs         Boolean?               @default(false)
+  salt_composition      String?                @db.VarChar(255)
+  manufacturer          String?                @db.VarChar(255)
+  packaging             String?                @db.VarChar(255)
+  what_it_is_used_for   String?
+  how_it_works          String?
+  safety_advice         Json?
+  expert_advice         String[]
   medicine_order_items  medicine_order_items[]
   brands                brands?                @relation(fields: [brand_id], references: [id], onUpdate: NoAction)
   categories            categories?            @relation(fields: [category_id], references: [id], onUpdate: NoAction)
@@ -264,7 +318,17 @@ model orders {
   created_at       DateTime?     @default(now()) @db.Timestamp(6)
   updated_at       DateTime?     @default(now()) @db.Timestamp(6)
   order_items      order_items[]
+  order_tracking   order_tracking[]
   users            users?        @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+}
+
+model order_tracking {
+  id               Int       @id @default(autoincrement())
+  order_id         Int
+  status           String    @db.VarChar(50)
+  message          String?   @db.VarChar(255) // e.g., "Your order has been shipped"
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  orders           orders?   @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model payment_gateways {
@@ -354,8 +418,24 @@ model users {
   address    String?
   created_at DateTime?   @default(now()) @db.Timestamp(6)
   updated_at DateTime?   @default(now()) @db.Timestamp(6)
-  orders     orders[]
-  user_cart  user_cart[]
+  orders         orders[]
+  user_cart      user_cart[]
+  user_addresses user_addresses[]
+}
+
+model user_addresses {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  address_line1  String?   @db.VarChar(255)
+  address_line2  String?   @db.VarChar(255)
+  city           String?   @db.VarChar(100)
+  state          String?   @db.VarChar(100)
+  pincode        String?   @db.VarChar(20)
+  address_type   String?   @default("Home") @db.VarChar(50)
+  is_default     Boolean?  @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  updated_at     DateTime? @default(now()) @db.Timestamp(6)
+  users          users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model faqs {
@@ -400,6 +480,19 @@ model doctors {
   updated_at           DateTime?        @default(now()) @db.Timestamp(6)
   appointments         appointments[]
   doctor_reviews       doctor_reviews[]
+  doctor_schedules     doctor_schedules[]
+}
+
+model doctor_schedules {
+  id               Int       @id @default(autoincrement())
+  doctor_id        Int
+  day_of_week      String?   @db.VarChar(20)
+  start_time       String?   @db.VarChar(20)
+  end_time         String?   @db.VarChar(20)
+  status           Int?      @default(1)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+  doctors          doctors?  @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model doctor_reviews {
@@ -428,4 +521,25 @@ model appointments {
   created_at           DateTime? @default(now()) @db.Timestamp(6)
   updated_at           DateTime? @default(now()) @db.Timestamp(6)
   doctors              doctors?  @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model contact_submissions {
+  id             Int       @id @default(autoincrement())
+  full_name      String    @db.VarChar(255)
+  contact_number String    @db.VarChar(20)
+  email_address  String    @db.VarChar(255)
+  message        String
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model video_tutorials {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  subtitle    String?   @db.VarChar(255)
+  thumbnail   String?
+  video_link  String
+  duration    String?   @db.VarChar(50)
+  status      Int?      @default(1)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
 }

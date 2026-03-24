@@ -1,4 +1,24 @@
 const appointmentModel = require("../models/appointment.model");
+const doctorScheduleModel = require("../models/doctor_schedule.model");
+
+// Helper to check if a time is within range
+const isTimeBetween = (checkTime, startTime, endTime) => {
+    // Assuming formats like "09:00 AM" or "14:00"
+    // Normalize to comparable numbers or Date objects
+    const parseTime = (t) => {
+        const [time, modifier] = t.split(' ');
+        let [hours, minutes] = time.split(':');
+        if (modifier === 'PM' && hours !== '12') hours = parseInt(hours, 10) + 12;
+        if (modifier === 'AM' && hours === '12') hours = '00';
+        return parseInt(hours, 10) * 60 + parseInt(minutes, 10);
+    };
+
+    const target = parseTime(checkTime);
+    const start = parseTime(startTime);
+    const end = parseTime(endTime);
+
+    return target >= start && target < end; // Assuming appointment is at the start of a slot
+};
 
 // BOOK APPOINTMENT
 const bookAppointment = async (req, res) => {
@@ -12,6 +32,29 @@ const bookAppointment = async (req, res) => {
         if (!doctor_id || !patient_name || !appointment_date || !appointment_time) {
             return res.status(400).json({ status: 0, message: "Missing required fields" });
         }
+
+        // 1. Get Day of the Week for the requested date
+        const dateObj = new Date(appointment_date);
+        const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+        // 2. Fetch doctor's schedule for that day
+        const schedules = await doctorScheduleModel.getScheduleByDay(doctor_id, dayOfWeek);
+
+        if (!schedules || schedules.length === 0) {
+            return res.status(400).json({ status: 0, message: `Doctor is not available on ${dayOfWeek}s` });
+        }
+
+        // 3. Check if requested time is within any of the doctor's available slots
+        const isAvailable = schedules.some(slot => 
+            isTimeBetween(appointment_time, slot.start_time, slot.end_time)
+        );
+
+        if (!isAvailable) {
+            return res.status(400).json({ status: 0, message: "Doctor is not available at the selected time" });
+        }
+
+        // 4. (Optional but good) Check if slot is already booked for this doctor-date-time
+        // We'll proceed to book for now as requested for the redesign.
 
         const data = await appointmentModel.bookAppointment({
             doctor_id: Number(doctor_id),

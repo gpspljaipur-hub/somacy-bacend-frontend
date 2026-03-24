@@ -84,9 +84,22 @@ const deleteAppointment = async (id) => {
     });
 };
 
+// GET APPOINTMENTS BY DOCTOR AND DATE
+const getAppointmentsByDoctorAndDate = async (doctor_id, date) => {
+    return await prisma.appointments.findMany({
+        where: { 
+            doctor_id: parseInt(doctor_id),
+            appointment_date: new Date(date),
+            status: { notIn: ['cancelled', 'rejected'] }
+        },
+        orderBy: { appointment_time: 'asc' }
+    });
+};
+
 module.exports = {
     bookAppointment,
     getAppointmentsByUser,
+    getAppointmentsByDoctorAndDate,
     countAppointmentsByUser,
     updateAppointmentStatus,
     updateAppointment,
