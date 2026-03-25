@@ -54,7 +54,7 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
     ];
   }
   if (type) where.lab_test_type = type;
-  if (categoryId) where.category_id = parseInt(categoryId);
+  if (categoryId && !isNaN(categoryId)) where.category_id = parseInt(categoryId);
 
   const tests = await prisma.lab_tests.findMany({
     where,
@@ -180,7 +180,7 @@ const countLabTests = async (search = "", type = null, categoryId = null) => {
     ];
   }
   if (type) where.lab_test_type = type;
-  if (categoryId) where.category_id = parseInt(categoryId);
+  if (categoryId && !isNaN(categoryId)) where.category_id = parseInt(categoryId);
   return await prisma.lab_tests.count({ where });
 };
 

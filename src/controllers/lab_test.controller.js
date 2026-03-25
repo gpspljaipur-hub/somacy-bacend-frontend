@@ -76,11 +76,11 @@ const addLabTest = async (req, res) => {
 // GET LAB TESTS
 const getLabTests = async (req, res) => {
   try {
-    const page = parseInt(req.body.page) || 1;
-    const limit = parseInt(req.body.limit) || 20;
+    const page = req.body.page && !isNaN(req.body.page) ? parseInt(req.body.page) : 1;
+    const limit = req.body.limit && !isNaN(req.body.limit) ? parseInt(req.body.limit) : 20;
     const search = req.body.search || "";
     const type = req.body.type || null; 
-    const categoryId = req.body.category_id || req.body.categoryId || null;
+    const categoryId = req.body.category_id && !isNaN(req.body.category_id) ? parseInt(req.body.category_id) : null;
     const offset = (page - 1) * limit;
 
     const data = await labTestModel.getAllLabTests(limit, offset, search, type, categoryId);
