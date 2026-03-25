@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{base_url}}/api/users/register"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: first_name
+      value: John
+    - type: text
+      key: last_name
+      value: Doe
+    - type: text
+      key: mobile
+      value: "9876543210"
+    - type: text
+      key: password
+      value: mypassword
+    - type: text
+      key: otp
+      value: ""
+    - type: text
+      key: address
+      value: Jaipur
+order: 1000

@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/doctor-schedule/list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: doctor_id
+      value: "1"
+order: 2000

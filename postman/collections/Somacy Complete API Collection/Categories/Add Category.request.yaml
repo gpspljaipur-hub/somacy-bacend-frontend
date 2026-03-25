@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/categories/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: category_name
+      value: Tablets
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: category_image
+      src:
+        - ""
+order: 1000

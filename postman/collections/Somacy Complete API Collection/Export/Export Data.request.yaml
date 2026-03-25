@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/export/"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: type
+      value: medicines
+    - type: text
+      key: search
+      value: ""
+order: 1000

@@ -1,0 +1,49 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Admin User
+    - type: text
+      key: mobile
+      value: "9999999999"
+    - type: text
+      key: role
+      value: Admin
+    - type: text
+      key: store_name
+      value: Somacy
+    - type: text
+      key: store_address
+      value: Street
+    - type: text
+      key: city
+      value: Jaipur
+    - type: text
+      key: state
+      value: Rajasthan
+    - type: text
+      key: pincode
+      value: "302001"
+    - type: text
+      key: drug_license_no
+      value: DL-001
+    - type: text
+      key: gst_no
+      value: ""
+    - type: text
+      key: email
+      value: ""
+    - type: text
+      key: removeProfileImage
+      value: "false"
+    - type: file
+      key: imageUrl
+      src:
+        - ""
+order: 5000

@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/user-order/update-status"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: order_id
+      value: "1"
+    - type: text
+      key: status
+      value: shipped
+    - type: text
+      key: message
+      value: Order is on the way
+order: 5000

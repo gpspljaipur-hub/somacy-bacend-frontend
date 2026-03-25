@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/general_items/delete"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+order: 4000

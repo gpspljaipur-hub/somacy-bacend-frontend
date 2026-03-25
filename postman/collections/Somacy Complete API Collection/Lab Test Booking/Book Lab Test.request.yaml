@@ -1,0 +1,39 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-test-booking/book"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: lab_test_id
+      value: "1"
+    - type: text
+      key: user_id
+      value: "1"
+    - type: text
+      key: patient_name
+      value: John Doe
+    - type: text
+      key: mobile
+      value: "9876543210"
+    - type: text
+      key: appointment_date
+      value: 2026-04-01
+    - type: text
+      key: appointment_time
+      value: 10:00 AM
+    - type: text
+      key: home_collection
+      value: "true"
+    - type: text
+      key: address
+      value: 123 Street Jaipur
+    - type: text
+      key: total_amount
+      value: "450"
+    - type: text
+      key: status
+      value: scheduled
+order: 1000

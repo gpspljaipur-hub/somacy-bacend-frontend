@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/verify-email-change"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: otp
+      value: "123456"
+    - type: text
+      key: new_email
+      value: new@somacy.com
+order: 6000

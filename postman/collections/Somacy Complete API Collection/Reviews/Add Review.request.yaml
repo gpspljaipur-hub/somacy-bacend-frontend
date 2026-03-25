@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/reviews/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: user_id
+      value: "1"
+    - type: text
+      key: target_id
+      value: "1"
+    - type: text
+      key: target_type
+      value: doctor
+    - type: text
+      key: rating
+      value: "5"
+    - type: text
+      key: comment
+      value: Excellent doctor!
+order: 1000

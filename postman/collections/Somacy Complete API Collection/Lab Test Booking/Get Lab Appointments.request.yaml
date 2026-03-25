@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-test-booking/list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: user_id
+      value: "1"
+    - type: text
+      key: page
+      value: "1"
+    - type: text
+      key: limit
+      value: "10"
+order: 2000

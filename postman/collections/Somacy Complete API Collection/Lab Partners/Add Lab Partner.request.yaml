@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-partner/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: SRL Diagnostics
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: logo
+      src:
+        - ""
+order: 1000

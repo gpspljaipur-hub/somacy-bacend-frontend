@@ -1,0 +1,48 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/signup"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Admin
+    - type: text
+      key: email
+      value: admin@somacy.com
+    - type: text
+      key: mobile
+      value: "9999999999"
+    - type: text
+      key: password
+      value: password123
+    - type: text
+      key: confirm_password
+      value: password123
+    - type: text
+      key: role
+      value: Admin
+    - type: text
+      key: store_name
+      value: Somacy Store
+    - type: text
+      key: store_address
+      value: 123 Street
+    - type: text
+      key: city
+      value: Jaipur
+    - type: text
+      key: state
+      value: Rajasthan
+    - type: text
+      key: pincode
+      value: "302001"
+    - type: text
+      key: drug_license_no
+      value: DL-12345
+    - type: text
+      key: gst_no
+      value: ""
+order: 2000

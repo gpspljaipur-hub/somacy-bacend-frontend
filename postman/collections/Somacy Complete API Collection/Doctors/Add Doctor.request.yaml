@@ -1,0 +1,49 @@
+$kind: http-request
+url: "{{base_url}}/api/doctors/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Dr. Ramesh Sharma
+    - type: text
+      key: specialization
+      value: Cardiologist
+    - type: text
+      key: experience_years
+      value: "10"
+    - type: text
+      key: consultation_fee
+      value: "500"
+    - type: text
+      key: location
+      value: Jaipur
+    - type: text
+      key: about
+      value: Experienced cardiologist
+    - type: text
+      key: education
+      value: '["MBBS","MD"]'
+    - type: text
+      key: awards
+      value: "[]"
+    - type: text
+      key: specializations_tags
+      value: '["Heart","Cardiology"]'
+    - type: text
+      key: is_rghs_empanelled
+      value: "false"
+    - type: text
+      key: consultation_modes
+      value: '["Video","In-Clinic"]'
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

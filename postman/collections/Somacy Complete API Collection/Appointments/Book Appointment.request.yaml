@@ -1,0 +1,42 @@
+$kind: http-request
+url: "{{base_url}}/api/appointments/book"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: doctor_id
+      value: "1"
+    - type: text
+      key: user_id
+      value: "1"
+    - type: text
+      key: patient_name
+      value: John Doe
+    - type: text
+      key: patient_id
+      value: P001
+    - type: text
+      key: consultation_mode
+      value: In-Clinic
+    - type: text
+      key: appointment_date
+      value: 2026-04-01
+    - type: text
+      key: appointment_time
+      value: 10:00 AM
+    - type: text
+      key: fee
+      value: "500"
+    - type: text
+      key: total_payable
+      value: "500"
+    - type: text
+      key: rghs_benefit_applied
+      value: "false"
+    - type: text
+      key: status
+      value: scheduled
+order: 1000

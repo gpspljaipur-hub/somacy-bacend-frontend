@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/contact/info/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: store_mobile
+      value: "9999999999"
+    - type: text
+      key: store_email
+      value: store@somacy.com
+    - type: text
+      key: store_address
+      value: Jaipur, Rajasthan
+    - type: text
+      key: contact_us
+      value: "9999999999"
+order: 4000

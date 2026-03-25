@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/blogs/upload-editor-image"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: file
+      key: image
+      src:
+        - ""
+order: 6000

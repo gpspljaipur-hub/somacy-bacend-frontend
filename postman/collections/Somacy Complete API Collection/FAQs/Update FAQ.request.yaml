@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/faqs/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: question
+      value: What is Somacy?
+    - type: text
+      key: answer
+      value: Somacy is a pharmacy app.
+    - type: text
+      key: status
+      value: "1"
+order: 4000

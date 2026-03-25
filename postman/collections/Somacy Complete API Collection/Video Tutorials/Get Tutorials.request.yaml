@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/video-tutorials/"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: page
+      value: "1"
+    - type: text
+      key: limit
+      value: "20"
+    - type: text
+      key: status
+      value: ""
+order: 2000

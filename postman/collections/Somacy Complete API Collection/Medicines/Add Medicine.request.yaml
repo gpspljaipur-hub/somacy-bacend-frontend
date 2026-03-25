@@ -1,0 +1,76 @@
+$kind: http-request
+url: "{{base_url}}/api/medicines/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: medicine_name
+      value: Paracetamol 500mg
+    - type: text
+      key: category_id
+      value: "1"
+    - type: text
+      key: brand_id
+      value: "1"
+    - type: text
+      key: medicine_description
+      value: Pain reliever
+    - type: text
+      key: medicine_type
+      value: Tablet
+    - type: text
+      key: price
+      value: "50"
+    - type: text
+      key: medicine_discount
+      value: "10"
+    - type: text
+      key: rghs_discount
+      value: "5"
+    - type: text
+      key: stock_status
+      value: In Stock
+    - type: text
+      key: stock_quantity
+      value: "100"
+    - type: text
+      key: prescription_required
+      value: "false"
+    - type: text
+      key: status
+      value: "1"
+    - type: text
+      key: pack_type
+      value: "10"
+    - type: text
+      key: medicine_rghs
+      value: "false"
+    - type: text
+      key: salt_composition
+      value: Paracetamol
+    - type: text
+      key: manufacturer
+      value: GSK
+    - type: text
+      key: packaging
+      value: Strip of 10
+    - type: text
+      key: what_it_is_used_for
+      value: Fever and pain
+    - type: text
+      key: how_it_works
+      value: Blocks pain signals
+    - type: text
+      key: safety_advice
+      value: "{}"
+    - type: text
+      key: expert_advice
+      value: "[]"
+    - type: file
+      key: medicine_images
+      src:
+        - ""
+order: 1000

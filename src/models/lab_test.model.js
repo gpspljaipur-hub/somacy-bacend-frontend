@@ -2,7 +2,7 @@ const prisma = require("../config/prisma");
 
 // ADD LAB TEST
 const addLabTest = async (data) => {
-  return await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const labTest = await tx.lab_tests.create({
       data: {
         category_id: data.lab_category ? parseInt(data.lab_category) : null,
@@ -18,7 +18,6 @@ const addLabTest = async (data) => {
         status: data.status !== undefined ? parseInt(data.status) : 1,
         is_popular: data.is_popular !== undefined ? !!data.is_popular : false,
         lab_partner_id: data.lab_partner_id ? parseInt(data.lab_partner_id) : null,
-        // Legacy fields (optional to keep for migration)
         lab_partner_name: data.lab_partner_name || null,
         lab_rating: data.lab_rating ? parseFloat(data.lab_rating) : 0,
         lab_accreditation: data.lab_accreditation || null,
@@ -39,8 +38,10 @@ const addLabTest = async (data) => {
       });
     }
 
-    return await getLabTestById(labTest.id);
+    return labTest;
   });
+
+  return await getLabTestById(created.id);
 };
 
 // GET ALL LAB TESTS
@@ -91,8 +92,8 @@ const getAllLabTests = async (limit = 20, offset = 0, search = "", type = null, 
 };
 
 // GET LAB TEST BY ID
-const getLabTestById = async (id) => {
-  const lt = await prisma.lab_tests.findUnique({
+const getLabTestById = async (id, tx = prisma) => {
+  const lt = await tx.lab_tests.findUnique({
     where: { id: parseInt(id) },
     include: {
       lab_test_categories: true,
@@ -125,7 +126,7 @@ const getLabTestById = async (id) => {
 
 // UPDATE LAB TEST
 const updateLabTest = async (id, data) => {
-  return await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const labTest = await tx.lab_tests.update({
       where: { id: parseInt(id) },
       data: {
@@ -165,8 +166,9 @@ const updateLabTest = async (id, data) => {
       }
     }
 
-    return await getLabTestById(id);
+    return labTest;
   });
+  return await getLabTestById(id);
 };
 
 const countLabTests = async (search = "", type = null, categoryId = null) => {

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-test-schedule/availability"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: lab_test_id
+      value: "1"
+    - type: text
+      key: date
+      value: 2026-04-01
+order: 5000

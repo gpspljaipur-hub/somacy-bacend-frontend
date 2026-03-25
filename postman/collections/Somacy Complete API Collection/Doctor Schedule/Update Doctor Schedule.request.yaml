@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/doctor-schedule/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: day_of_week
+      value: Tuesday
+    - type: text
+      key: start_time
+      value: 09:00 AM
+    - type: text
+      key: end_time
+      value: 05:00 PM
+    - type: text
+      key: status
+      value: "1"
+order: 3000

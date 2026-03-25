@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/customers/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: John Doe
+    - type: text
+      key: email
+      value: john@mail.com
+    - type: text
+      key: mobile
+      value: "9876543210"
+    - type: text
+      key: address
+      value: Jaipur
+    - type: text
+      key: status
+      value: "1"
+order: 2000

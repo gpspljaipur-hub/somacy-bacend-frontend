@@ -1,0 +1,76 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-tests/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: lab_category
+      value: "1"
+    - type: text
+      key: test_name
+      value: Blood Test
+    - type: text
+      key: package_name
+      value: ""
+    - type: text
+      key: amount
+      value: "500"
+    - type: text
+      key: discount
+      value: "10"
+    - type: text
+      key: rghs_discount
+      value: "5"
+    - type: text
+      key: is_rghs
+      value: "false"
+    - type: text
+      key: description
+      value: Complete blood count
+    - type: text
+      key: lab_test_type
+      value: Singular
+    - type: text
+      key: status
+      value: "1"
+    - type: text
+      key: is_popular
+      value: "false"
+    - type: text
+      key: lab_partner_name
+      value: SRL
+    - type: text
+      key: lab_rating
+      value: "4.5"
+    - type: text
+      key: lab_accreditation
+      value: NABL
+    - type: text
+      key: free_home_collection
+      value: "true"
+    - type: text
+      key: report_turnaround_time
+      value: 24 hours
+    - type: text
+      key: test_prerequisites
+      value: "[]"
+    - type: text
+      key: parameters_count
+      value: "10"
+    - type: text
+      key: included_parameters_details
+      value: "{}"
+    - type: text
+      key: lab_partner_id
+      value: ""
+    - type: text
+      key: test_ids
+      value: "[]"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

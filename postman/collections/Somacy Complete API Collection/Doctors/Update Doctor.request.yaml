@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/doctors/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: name
+      value: Dr. Ramesh Sharma
+    - type: text
+      key: specialization
+      value: Cardiologist
+    - type: text
+      key: experience_years
+      value: "10"
+    - type: text
+      key: consultation_fee
+      value: "500"
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 4000

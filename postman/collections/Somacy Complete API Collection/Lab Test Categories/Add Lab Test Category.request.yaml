@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-test-categories/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: category_name
+      value: Pathology
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

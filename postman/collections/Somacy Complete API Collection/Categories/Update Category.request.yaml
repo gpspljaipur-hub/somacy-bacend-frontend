@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/categories/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: category_name
+      value: Tablets
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: category_image
+      src:
+        - ""
+order: 3000

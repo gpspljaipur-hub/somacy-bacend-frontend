@@ -1,0 +1,40 @@
+$kind: http-request
+url: "{{base_url}}/api/medicine-orders/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: customer_id
+      value: "1"
+    - type: text
+      key: order_type
+      value: Non-RGHS
+    - type: text
+      key: payment_method
+      value: Cash
+    - type: text
+      key: address
+      value: 123 Street Jaipur
+    - type: text
+      key: RGHS_Tid
+      value: ""
+    - type: text
+      key: items
+      value: '[{"medicine_id":1,"quantity":2}]'
+    - type: text
+      key: delivery_charge
+      value: "50"
+    - type: text
+      key: doctor_name
+      value: ""
+    - type: text
+      key: prescription_date
+      value: ""
+    - type: file
+      key: prescriptions
+      src:
+        - ""
+order: 1000

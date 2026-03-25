@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/api/video-tutorials/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: How to order medicine
+    - type: text
+      key: subtitle
+      value: Step by step guide
+    - type: text
+      key: video_link
+      value: https://youtube.com/watch?v=abc123
+    - type: text
+      key: duration
+      value: 5:30
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: thumbnail
+      src:
+        - ""
+order: 1000

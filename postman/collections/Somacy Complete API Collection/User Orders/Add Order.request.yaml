@@ -1,0 +1,46 @@
+$kind: http-request
+url: "{{base_url}}/api/user-order/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: user_id
+      value: "1"
+    - type: text
+      key: order_name
+      value: My Order
+    - type: text
+      key: order_type
+      value: medicine
+    - type: text
+      key: delivery_date
+      value: 2026-04-05
+    - type: text
+      key: beneficiary_name
+      value: John Doe
+    - type: text
+      key: delivery_address
+      value: 123 Street Jaipur
+    - type: text
+      key: total_items
+      value: "3"
+    - type: text
+      key: total_amount
+      value: "300"
+    - type: text
+      key: total_mrp
+      value: "350"
+    - type: text
+      key: status
+      value: pending
+    - type: text
+      key: items
+      value: '[{"medicine_id":1,"quantity":2}]'
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

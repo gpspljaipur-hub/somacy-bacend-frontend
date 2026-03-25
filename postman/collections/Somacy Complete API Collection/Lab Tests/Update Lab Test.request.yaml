@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/lab-tests/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: test_name
+      value: Blood Test
+    - type: text
+      key: amount
+      value: "500"
+    - type: text
+      key: discount
+      value: "10"
+    - type: text
+      key: status
+      value: "1"
+    - type: text
+      key: lab_test_type
+      value: Singular
+    - type: file
+      key: image
+      src:
+        - ""
+order: 3000

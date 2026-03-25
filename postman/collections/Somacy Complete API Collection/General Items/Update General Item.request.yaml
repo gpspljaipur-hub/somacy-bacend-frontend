@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/general_items/update"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: id
+      value: "1"
+    - type: text
+      key: item_name
+      value: Sanitizer
+    - type: text
+      key: price
+      value: "100"
+    - type: text
+      key: status
+      value: "1"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 3000

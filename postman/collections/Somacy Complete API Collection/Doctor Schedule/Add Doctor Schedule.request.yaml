@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/doctor-schedule/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: schedules
+      value: '[{"doctor_id":1,"day_of_week":"Monday","start_time":"09:00
+        AM","end_time":"05:00 PM","status":1}]'
+order: 1000

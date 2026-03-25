@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/general_items/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: item_name
+      value: Sanitizer
+    - type: text
+      key: category_id
+      value: "1"
+    - type: text
+      key: price
+      value: "100"
+    - type: text
+      key: discount
+      value: "5"
+    - type: text
+      key: status
+      value: "1"
+    - type: text
+      key: description
+      value: Hand sanitizer 500ml
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000

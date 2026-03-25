@@ -1,0 +1,82 @@
+$kind: http-request
+url: "{{base_url}}/api/settings/"
+method: PUT
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: dashboardName
+      value: Somacy Admin
+    - type: text
+      key: shortName
+      value: Somacy
+    - type: text
+      key: currency
+      value: INR
+    - type: text
+      key: timezone
+      value: Asia/Kolkata
+    - type: text
+      key: showPrescription
+      value: "true"
+    - type: text
+      key: storeName
+      value: Somacy Store
+    - type: text
+      key: storeMobile
+      value: "9999999999"
+    - type: text
+      key: storeEmail
+      value: store@somacy.com
+    - type: text
+      key: storeAddress
+      value: Jaipur, Rajasthan
+    - type: text
+      key: contactUs
+      value: "9999999999"
+    - type: text
+      key: aboutUs
+      value: We are Somacy
+    - type: text
+      key: latitude
+      value: "26.9124"
+    - type: text
+      key: longitude
+      value: "75.7873"
+    - type: text
+      key: deliveryRadius
+      value: "10"
+    - type: text
+      key: perKmPrice
+      value: "5"
+    - type: text
+      key: referralAmount
+      value: "50"
+    - type: text
+      key: signUpAmount
+      value: "100"
+    - type: text
+      key: privacyPolicy
+      value: Privacy text here
+    - type: text
+      key: termsConditions
+      value: Terms text here
+    - type: text
+      key: userAppId
+      value: ""
+    - type: text
+      key: userAppKey
+      value: ""
+    - type: text
+      key: deliveryAppId
+      value: ""
+    - type: text
+      key: deliveryAppKey
+      value: ""
+    - type: file
+      key: logo
+      src:
+        - ""
+order: 2000

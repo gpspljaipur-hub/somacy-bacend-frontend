@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/faqs/list"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: page
+      value: "1"
+    - type: text
+      key: limit
+      value: "20"
+order: 2000

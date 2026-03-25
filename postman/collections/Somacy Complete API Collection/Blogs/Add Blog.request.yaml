@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/api/blogs/add"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Health Tips
+    - type: text
+      key: description
+      value: Short desc
+    - type: text
+      key: content
+      value: <p>Full content here</p>
+    - type: text
+      key: category
+      value: Health
+    - type: text
+      key: status
+      value: "2"
+    - type: file
+      key: image
+      src:
+        - ""
+order: 1000
